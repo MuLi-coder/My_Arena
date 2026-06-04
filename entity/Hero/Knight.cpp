@@ -7,9 +7,9 @@
 #include<string>
 #include <QString>
 
-Knight::Knight(const std::string n, const int init_x, const int init_y,int owner)
-    :Unit(n,init_x,init_y, owner) {
-    hp = 100;
+Knight::Knight(const std::string n, const int pos,int owner)
+    :Unit(n,pos, owner) {
+    hp = 70;
     armor = 50;
     att = 50;
     image = "../images/Knight.png";

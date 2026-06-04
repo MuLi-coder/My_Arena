@@ -21,13 +21,13 @@ PieceWidget::PieceWidget(QWidget *parent) : QWidget(parent), currentUnit(nullptr
     // 4. 把血条和图片加入布局
     layout->addWidget(hpBarLabel);
     layout->addWidget(imageLabel);
-
     this->hide();
 }
 
 
 // 核心方法：绑定逻辑数据，并更新界面
 void PieceWidget::setUnit(Unit* unit) {
+    this->setStyleSheet("border: 0.1px solid gray;");//直接去除边框
     currentUnit = unit;
     if (unit) {
         // 1. 加载并缩放人物图片
@@ -37,11 +37,7 @@ void PieceWidget::setUnit(Unit* unit) {
 
         // 2. 根据当前血量更新血条样式（比如满血绿，残血红）
         int hpPercent = unit->getHp()*100/ unit->getMaxHp();
-
-        QString style = QString("background-color: rgb(%1, %2, 0);")
-                            .arg(255 * (100 - hpPercent) / 100)
-                            .arg(255 * hpPercent / 100);
-        hpBarLabel->setStyleSheet(style);
+        hpBarLabel->setFixedSize((CELL_SIZE-10) * hpPercent/100, 6);
 
         hpBarLabel->setVisible(true);
         imageLabel->setVisible(true);

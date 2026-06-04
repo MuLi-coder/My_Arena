@@ -2,10 +2,12 @@
 #include <string>
 #include "Unit.h"
 
-Unit::Unit(std::string n, const int init_x,const int init_y,int owner)
-        : name(std::move(n)), x(init_x), y(init_y) ,owner(owner){
+Unit::Unit(std::string n,int pos,int owner)
+        : name(std::move(n)) ,owner(owner),pos(pos){
     maxHp = 100;
-    hp = 100;
+    hp = 10;
+    x = 0;
+    y = 0;
 }
 
 
@@ -21,6 +23,9 @@ void Unit::takeDamage(const int dmg){
     std::cout << name << " took " << dmg << " dmg. Remaining HP: " << hp << std::endl;
 }
 
+void Unit::setX(int new_x) { x = new_x; }
+void Unit::setY(int new_y) { y = new_y; }
+
 std::string Unit::getName()const{ return name;}
 
 int Unit::getHp() const { return hp; }
@@ -32,3 +37,12 @@ int Unit::getY() const { return y; }
 int Unit::getOwner() const { return owner; }
 
 int Unit::getMaxHp() const { return maxHp; }
+
+//寻路和攻击逻辑就在这里了
+void Unit::march() {
+    if (this->getOwner()==0) {
+        this->setX(x-1);
+    }else {
+        this->setX(x+1);
+    }
+}

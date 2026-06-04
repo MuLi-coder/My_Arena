@@ -16,7 +16,7 @@ private:
     int att;
     QString image;
 public:
-    Knight(std::string n, int init_x, int init_y,int owner = 0);
+    Knight(std::string n, int pos,int owner = 0);
 
     void attack(Unit* target) override;
 

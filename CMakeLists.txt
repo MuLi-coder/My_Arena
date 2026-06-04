@@ -30,6 +30,8 @@ add_executable(my_Arena
         GUI/PieceWidget.h
         game_logic/GameManager.cpp
         game_logic/GameManager.h
+        game_logic/Player.cpp
+        game_logic/Player.h
 )
 
 # 4. 把 Qt 的库链接到我们的程序上

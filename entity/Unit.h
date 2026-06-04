@@ -10,19 +10,16 @@ class Unit {
 protected:
     //-----四个信息-----//
     std::string name;   //名字
-    int x, y;           //坐标
+    int x, y, pos;           //坐标
     int hp;             //生命值
     int maxHp;          //最大生命值
     int owner;          //所属
 
 public:
     // 构造函数
-    Unit(std::string n, int init_x,int init_y, int owner = 1);
-
-    // _析构函数
+    Unit(std::string n, int pos, int owner = 1);
     virtual ~Unit() = default;
 
-    //下面是我为基类定义的 5 (3+2)类基本函数
 
     // 移动
     void move(int new_x,int new_y);
@@ -30,7 +27,9 @@ public:
     virtual void attack(Unit* target) = 0;
     // 受到伤害
     void takeDamage(int dmg);
-
+    //设置坐标
+    void setX(int new_x);
+    void setY(int new_y);
     // 获取状态: 名字，生命,横纵坐标，图片路径
     std::string getName() const;
     int getHp()const;
@@ -40,6 +39,7 @@ public:
     int getMaxHp() const;
     virtual QString getImage()const = 0;
 
-
+    //combat
+    void march();
 };
 #endif //MY_ARENA_UNIT_H

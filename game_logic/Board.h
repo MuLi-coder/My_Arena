@@ -4,38 +4,36 @@
 #include <vector>
 #include "../entity/Unit.h"
 class Board {
-
-private:
-    //场上整个board实例，包括棋盘和备战区两个部分
-    int rows_, cols_,ben_;
-    std::vector<std::vector<Unit*>> grid_;
-    std::vector<Unit*> bench_;
-
+    //场上整个board实例，包括棋盘grid和备战区bench两个部分
+    int row, col, ben;
+    std::vector<std::vector<Unit*>> grid;
+    std::vector<Unit*> bench;
 public:
-    Board(int rows = 7, int cols = 7,int ben =6);
-
+    Board(int r = 8, int c = 8,int pos = 8 );
     ~Board();
-
-    // 判断某个格子是否为空,空返回 true,越界或者已占用，返回false
-    bool isCellEmpty(int row, int col) const;
-    bool isCellEmpty(int pos) const;
-
+    //获取棋盘和备战区大小
+    int getRow() const;
+    int getCol() const;
+    int getBen() const;
     // 获取指定格子的元素
-    Unit* getUnitAt(int row, int col) const;
+    Unit* getUnitAt(int r, int c) const;
     Unit* getUnitAt(int pos) const;
-
+    //判断某个坐标是否合法
+    bool isPositionValid(int r, int c) const;
+    bool isPositionValid(int pos) const;
+    // 判断某个格子是否为空,空返回 true,已占用返回false,里面需包含合法性检验
+    bool isCellEmpty(int r, int c) const;
+    bool isCellEmpty(int pos) const;
     // 在指定格子放置一个指定棋子
-    void placeUnitAt(int row, int col, Unit* hero);
+    void placeUnitAt(int r, int c, Unit* hero);
     void placeUnitAt(int pos,Unit* hero);
-
     // 悬空指定格子
-    void removeUnitAt(int row, int col);
+    void removeUnitAt(int r, int c);
     void removeUnitAt(int pos);
 
-    //获取棋盘和备战区大小
-    int getRows() const;
-    int getCols() const;
-    int getBen() const;
+    //combat
+    void moveUnit();
+    void rePrepare();
 };
 
 #endif // BOARD_H

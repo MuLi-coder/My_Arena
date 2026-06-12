@@ -1,16 +1,21 @@
-#ifndef BOARD_H
-#define BOARD_H
+//
+// Created by ml on 2026/6/8.
+//
+
+#ifndef MY_ARENA_PREBOARD_H
+#define MY_ARENA_PREBOARD_H
+
 
 #include <vector>
 #include "../entity/Unit.h"
-class Board {
+class PreBoard {
     //场上整个board实例，包括棋盘grid和备战区bench两个部分
     int row, col, ben;
     std::vector<std::vector<Unit*>> grid;
     std::vector<Unit*> bench;
 public:
-    Board(int r = 8, int c = 8,int pos = 8 );
-    ~Board();
+    PreBoard(int r = 8, int c = 8,int pos = 8 );
+    ~PreBoard();
     //获取棋盘和备战区大小
     int getRow() const;
     int getCol() const;
@@ -32,8 +37,8 @@ public:
     void removeUnitAt(int pos);
 
     //combat
-    void moveUnit();
+
     void rePrepare();
 };
 
-#endif // BOARD_H
+#endif //MY_ARENA_PREBOARD_H

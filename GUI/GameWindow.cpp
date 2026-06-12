@@ -8,8 +8,11 @@
 GameWindow::GameWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    //创建管理者实例
     gameManager = std::make_unique<GameManager>(8,8,8);
+    //将下游信号和刷新函数绑定
     connect(gameManager.get(),&GameManager::shouldUpdate,this,&GameWindow::updateBoardUI);
+
     // 状态记录参数的初始化
     isDragging = false;
     dragFromRow = -1;
@@ -21,9 +24,10 @@ GameWindow::GameWindow(QWidget *parent)
     gameManager->placeUnitAt(3,new Knight("test 1",3));
     gameManager->placeUnitAt(4,new Knight("test 2",4));
     gameManager->placeUnitAt(2,2,new Knight("test 3",5,1));
+    gameManager->placeUnitAt(3,3,new Knight("test 4",4,1));
     //---------------------------------
 
-    //--------------------------下面就是画图的部分-----------------------------//
+    //--------------------------下面就是画图的部分的初始化-----------------------------//
     // 1. 设置窗口基础属性
     setWindowTitle("my_Arena");
     resize(600, 800); // 稍微调高一点窗口，给上下备战区留出足够空间
@@ -116,14 +120,17 @@ GameWindow::GameWindow(QWidget *parent)
     QPushButton* combatButton = new QPushButton("Combat", controlButtonPart); // 直接传入文字和父控件
     combatButton->setFixedSize(70, 40);
     combatButton->setStyleSheet("color:red;border: 1px solid gray; background:white ;");
+    //将按钮绑定需要激发的函数：切换战斗阶段
     connect(combatButton, &QPushButton::clicked, this, [=]() {
         gameManager->changeStateTo(GameState::Combat);
+
     });
 
     // 第二个返回备战按钮
     QPushButton* prepareButton = new QPushButton("Prepare", controlButtonPart);
     prepareButton->setFixedSize(70, 40);
     prepareButton->setStyleSheet("color:red; border: 1px solid gray; background: white;");
+    //将按钮绑定需要激发的函数：准换到备战阶段
     connect(prepareButton, &QPushButton::clicked, this, [=]() {
         gameManager->changeStateTo(GameState::Prepare);
     });
@@ -132,6 +139,7 @@ GameWindow::GameWindow(QWidget *parent)
     QPushButton* pauseButton = new QPushButton("Pause", controlButtonPart);
     pauseButton->setFixedSize(70, 40);
     pauseButton->setStyleSheet("background:#ed897b;border: 1px solid gray; ");
+    //绑定激发的函数：暂停秒表
     connect(pauseButton, &QPushButton::clicked, this, [=]() {
        if (gameManager->getCurrentState()==GameState::Combat) {
            gameManager->timer_stop();
@@ -159,7 +167,7 @@ void GameWindow::mousePressEvent(QMouseEvent *event) {
         if (!clickedWidget) return;
         for (int r = 0; r < gameManager->getRow(); ++r) {
             for (int c = 0; c < gameManager->getCol(); ++c) {
-                if (gridWidgets[r][c] == clickedWidget && !gameManager->isEmpty(r,c) && gameManager->getUnitAt(r,c)->getOwner()==0) {
+                if (gridWidgets[r][c] == clickedWidget && !gameManager->isCellEmpty(r,c) && gameManager->getUnitAt(r,c)->getOwner()==0) {
                     isDragging =true;
                     dragHero = gameManager->getUnitAt(r,c);
                     dragFromRow = r;
@@ -194,7 +202,7 @@ void GameWindow::mouseReleaseEvent(QMouseEvent *event) {
             bool isFind = false;
             for (int r = gameManager->getRow()-1; r >= gameManager->getRow()/2; --r) {
                 for (int c = 0; c < gameManager->getCol(); ++c) {
-                    if (gridWidgets[r][c] == releaseWidget && gameManager->isEmpty(r,c)) {
+                    if (gridWidgets[r][c] == releaseWidget && gameManager->isCellEmpty(r,c)) {
                         //找到空格并落子
                         gameManager->placeUnitAt(r,c,dragHero);
                         gameManager->removeUnitAt(dragFromRow,dragFromCol);
@@ -232,7 +240,7 @@ void GameWindow::mouseReleaseEvent(QMouseEvent *event) {
 // 刷新棋盘显示
 void GameWindow::updateBoardUI() {
     GameState state = gameManager->getCurrentState();
-    // 备战时刷新逻辑
+    // 备战时刷新逻辑,严格根据棋子数据位置定位，board层数据垂直映射
     if (state==GameState::Prepare) {
         for (int r = 0; r < gameManager->getRow(); ++r) {
             for (int c = 0; c < gameManager->getCol(); ++c) {
@@ -244,30 +252,21 @@ void GameWindow::updateBoardUI() {
             PieceWidget* w = benchWidgets[k];
             w->setUnit(gameManager->getUnitAt(k));
         }
-
     }
-    //战斗时刷新逻辑
+
+    //战斗时刷新逻辑，更换更新逻辑，数据源来自ComBoard
     else if (state==GameState::Combat) {
-        //先全部置空
-        for (int r=0; r<gameManager->getRow(); ++r) {
-            for (int c=0; c<gameManager->getCol(); ++c) {
-                PieceWidget* w = gridWidgets[r][c];
-                w->setUnit(nullptr);
-            }
-        }
-        //然后根据有的棋子渲染
         for (int r = 0; r < gameManager->getRow(); ++r) {
             for (int c = 0; c < gameManager->getCol(); ++c) {
-                Unit* unit = gameManager->getUnitAt(r,c);
-                if (unit) {
-                    int x = unit->getX();
-                    int y = unit->getY();
-                    this->getPieceWidget(x,y)->setUnit(unit);
-                }
+                PieceWidget* w = gridWidgets[r][c];
+                w->setUnit(gameManager->getUnitAt(r,c));
             }
         }
+        for (int k = 0; k < gameManager->getBen(); ++k) {
+            PieceWidget* w = benchWidgets[k];
+            w->setUnit(gameManager->getUnitAt(k));
+        }
     }
-    //
 }
 
 PieceWidget* GameWindow::getPieceWidget(const int r,const int c) {

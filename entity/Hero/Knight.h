@@ -13,7 +13,6 @@
 class Knight : public Unit{
 private:
     int armor;
-    int att;
     QString image;
 public:
     Knight(std::string n, int pos,int owner = 0);

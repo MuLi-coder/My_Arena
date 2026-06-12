@@ -22,8 +22,6 @@ add_executable(my_Arena
         entity/Hero/Knight.h
         entity/Hero/Mage.cpp
         entity/Hero/Mage.h
-        game_logic/Board.cpp
-        game_logic/Board.h
         GUI/GameWindow.cpp
         GUI/GameWindow.h
         GUI/PieceWidget.cpp
@@ -32,6 +30,10 @@ add_executable(my_Arena
         game_logic/GameManager.h
         game_logic/Player.cpp
         game_logic/Player.h
+        game_logic/PreBoard.cpp
+        game_logic/PreBoard.h
+        game_logic/ComBoard.cpp
+        game_logic/ComBoard.h
 )
 
 # 4. 把 Qt 的库链接到我们的程序上

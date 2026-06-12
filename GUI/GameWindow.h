@@ -6,7 +6,7 @@
 #include <QMouseEvent>
 #include <QPushButton>
 #include <memory>
-#include "../game_logic/board.h"
+
 #include "PieceWidget.h"
 #include "../game_logic/GameManager.h"
 
@@ -14,23 +14,28 @@
 class GameWindow : public QMainWindow {
     Q_OBJECT
     const int CELL_SIZE = 60;
-    //拥有一个管理者，向管理者要数据
+    //只需要拥有一个管理者，向管理者要数据，管理者拥有所有的数据
     std::unique_ptr<GameManager> gameManager;
-    //拖拽状态记录参数
+
+    //鼠标拖拽事件，拖拽状态记录参数
     bool isDragging;
     int dragFromRow;
     int dragFromCol;
     int dragFromPos;
     Unit* dragHero;
-    // 容器存储界面上每个格子的指针，方便后续通过指针改颜色
+
+    // 页面，需要维护的数据
     std::vector<std::vector<PieceWidget*>> gridWidgets;
     std::vector<PieceWidget*> benchWidgets;
+    //信号槽函数
 private slots:
     void updateBoardUI(); // 刷新场景显示
+
 public:
     explicit GameWindow(QWidget *parent = nullptr);
     PieceWidget* getPieceWidget(int r, int c);
     PieceWidget* getPieceWidget(int pos);
+
 protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;

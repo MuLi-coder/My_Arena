@@ -45,6 +45,7 @@ void ComBoard::clear() {
 }
 
 bool ComBoard::isCellEmpty(int r, int c) const {
+    if (r<0||r>=row||c<0||c>=col) { return false; }
     if (grid[r][c] != nullptr) {
         return false;
     }
@@ -81,13 +82,16 @@ void ComBoard::marchEveryUnit() {
                             continue;
                         }
                         //意愿不能执行，执行替代方案，不反向移动
-                        if (isCellEmpty(r+1,c)) {
-                            moveUnitFromTo(r,c,r+1,c,unit);
-                            continue;
-                        }
-                        if (isCellEmpty(r-1,c)) {
-                            moveUnitFromTo(r,c,r-1,c,unit);
-                            continue;
+                        if (randomNum()<50) {
+                            if (isCellEmpty(r+1,c)) {
+                                moveUnitFromTo(r,c,r+1,c,unit);
+                                continue;
+                            }
+                        }else {
+                            if (isCellEmpty(r-1,c)) {
+                                moveUnitFromTo(r,c,r-1,c,unit);
+                                continue;
+                            }
                         }
                     }
                     else if (action.move =="Right") {
@@ -96,13 +100,16 @@ void ComBoard::marchEveryUnit() {
                             moveUnitFromTo(r,c,r,c+1,unit);
                             continue;
                         }
-                        if (isCellEmpty(r+1,c)) {
-                            moveUnitFromTo(r,c,r+1,c,unit);
-                            continue;
-                        }
-                        if (isCellEmpty(r-1,c)) {
-                            moveUnitFromTo(r,c,r-1,c,unit);
-                            continue;
+                        if (randomNum()<50) {
+                            if (isCellEmpty(r+1,c)) {
+                                moveUnitFromTo(r,c,r+1,c,unit);
+                                continue;
+                            }
+                        }else {
+                            if (isCellEmpty(r-1,c)) {
+                                moveUnitFromTo(r,c,r-1,c,unit);
+                                continue;
+                            }
                         }
                     }
                     else if (action.move =="Up") {
@@ -111,13 +118,16 @@ void ComBoard::marchEveryUnit() {
                             moveUnitFromTo(r,c,r-1,c,unit);
                             continue;
                         }
-                        if (isCellEmpty(r,c-1)) {
-                            moveUnitFromTo(r,c,r,c-1,unit);
-                            continue;
-                        }
-                        if (isCellEmpty(r,c+1)) {
-                            moveUnitFromTo(r,c,r,c+1,unit);
-                            continue;
+                        if (randomNum()<50) {
+                            if (isCellEmpty(r,c-1)) {
+                                moveUnitFromTo(r,c,r,c-1,unit);
+                                continue;
+                            }
+                        }else {
+                            if (isCellEmpty(r,c+1)) {
+                                moveUnitFromTo(r,c,r,c+1,unit);
+                                continue;
+                            }
                         }
                     }
                     else if (action.move =="Down") {
@@ -126,13 +136,16 @@ void ComBoard::marchEveryUnit() {
                             moveUnitFromTo(r,c,r+1,c,unit);
                             continue;
                         }
-                        if (isCellEmpty(r,c+1)) {
-                            moveUnitFromTo(r,c,r,c+1,unit);
-                            continue;
-                        }
-                        if (isCellEmpty(r,c-1)) {
-                            moveUnitFromTo(r,c,r,c-1,unit);
-                            continue;
+                        if (randomNum()<50) {
+                            if (isCellEmpty(r,c+1)) {
+                                moveUnitFromTo(r,c,r,c+1,unit);
+                                continue;
+                            }
+                        }else {
+                            if (isCellEmpty(r,c-1)) {
+                                moveUnitFromTo(r,c,r,c-1,unit);
+                                continue;
+                            }
                         }
                     }
                 }
@@ -157,5 +170,4 @@ void ComBoard::marchEveryUnit() {
             }
         }
     }
-
 }

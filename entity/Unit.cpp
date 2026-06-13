@@ -2,11 +2,10 @@
 #include <string>
 #include "Unit.h"
 
-#include "../game_logic/GameManager.h"
 
-Unit::Unit(std::string n,int pos,int owner)
-        : name(std::move(n)) ,owner(owner),pos(pos){
-    maxHp = 100;
+
+Unit::Unit(std::string n,int owner)
+        : name(std::move(n)) ,owner(owner){
     hp = 10;
     x = 0;
     y = 0;
@@ -43,6 +42,8 @@ int Unit::getOwner() const { return owner; }
 int Unit::getMaxHp() const { return maxHp; }
 
 int Unit::getAtt() const { return att; }
+
+QString Unit::getImage()const{ return image;}
 
 void Unit::resetAction() {
     action.move="Null";

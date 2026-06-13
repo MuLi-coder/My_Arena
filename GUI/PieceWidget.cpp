@@ -35,9 +35,15 @@ void PieceWidget::setUnit(Unit* unit) {
         QPixmap scaledPixmap = pixmap.scaled(CELL_SIZE, CELL_SIZE - 8, Qt::KeepAspectRatio, Qt::SmoothTransformation); // 高度减去血条的大概高度
         imageLabel->setPixmap(scaledPixmap);
 
-        // 2. 根据当前血量更新血条样式（比如满血绿，残血红）
+        // 2. 根据当前血量更新血条
         int hpPercent = unit->getHp()*100/ unit->getMaxHp();
         hpBarLabel->setFixedSize((CELL_SIZE-10) * hpPercent/100, 6);
+        if (currentUnit->getOwner()==0) {
+            hpBarLabel->setStyleSheet("background-color: green; border-radius:3px; border: green");
+        }else {
+            hpBarLabel->setStyleSheet("background-color: red; border-radius:3px; border: red");
+        }
+
 
         hpBarLabel->setVisible(true);
         imageLabel->setVisible(true);

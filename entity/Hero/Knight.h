@@ -8,18 +8,12 @@
 #include<iostream>
 #include<string>
 #include "../Unit.h"
-#include<QString>
+
 
 class Knight : public Unit{
-private:
     int armor;
-    QString image;
 public:
-    Knight(std::string n, int pos,int owner = 0);
-
-    void attack(Unit* target) override;
-
-    QString getImage() const override;
+    Knight(std::string n,int owner = 0);
 };
 
 

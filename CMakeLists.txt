@@ -34,6 +34,8 @@ add_executable(my_Arena
         game_logic/PreBoard.h
         game_logic/ComBoard.cpp
         game_logic/ComBoard.h
+        game_logic/Shop.cpp
+        game_logic/Shop.h
 )
 
 # 4. 把 Qt 的库链接到我们的程序上

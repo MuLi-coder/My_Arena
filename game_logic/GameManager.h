@@ -12,6 +12,10 @@
 #include "ComBoard.h"
 #include "PreBoard.h"
 #include "Player.h"
+#include "Shop.h"
+
+#include "../entity/Hero/Knight.h"
+#include "../entity/Hero/Mage.h"
 
 enum class GameState {
     Prepare,
@@ -31,6 +35,8 @@ class GameManager : public QObject{
     std::unique_ptr<ComBoard> comBoard;
     //拥有玩家数据
     std::unique_ptr<Player> player;
+    //拥有商店数据
+    std::unique_ptr<Shop> shop;
 
     //状态对应的处理函数
     void handlePrepare();
@@ -43,21 +49,29 @@ public:
     GameState getCurrentState() const;
     void changeStateTo(GameState newGameState);
     void reset();
-    void timer_stop();
+    bool isTimerActive() const;
+    void timerStart();
+    void timerStop();
     bool isComEnd() const;
     //棋盘状态
     int getRow() const;
     int getCol() const;
     int getBen() const;
-    Unit* getUnitAt(int r,int c) const;
-    Unit* getUnitAt(int pos) const;
-    bool isCellEmpty(int r, int c) const;
-    bool isEmpty(int pos) const;
-    void removeUnitAt(int r, int c);
-    void removeUnitAt(int pos);
-    void placeUnitAt(int r, int c,Unit* unit) ;
-    void placeUnitAt(int pos,Unit* unit) ;
+    Unit* getUnitAtGrid(int r,int c) const;
+    Unit* getUnitAtBench(int pos) const;
+    bool isCellEmptyGrid(int r, int c) const;
+    bool isCellEmptyBench(int pos) const;
+    void removeUnitAtGrid(int r, int c);
+    void removeUnitAtBench(int pos);
+    void placeUnitAtGrid(int r, int c,Unit* unit) ;
+    void placeUnitAtBench(int pos,Unit* unit) ;
 
+    //SHOP
+    bool isCellEmptyShop(int s)const;
+    Unit* getUnitAtShop(int s)const;
+    void placeUnitAtShop(int s,Unit* unit);
+    void removeUnitAtShop(int s);
+    void refreshShop();
     //向外发送的信号参数
     signals:
     void shouldUpdate();

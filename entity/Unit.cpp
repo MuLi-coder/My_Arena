@@ -4,8 +4,8 @@
 
 
 
-Unit::Unit(std::string n,int owner)
-        : name(std::move(n)) ,owner(owner){
+Unit::Unit(int owner)
+        : owner(owner){
     hp = 10;
     x = 0;
     y = 0;
@@ -21,15 +21,12 @@ Unit::Unit(std::string n,int owner)
 void Unit::takeDamage(const int dmg){
     hp -= dmg;
     if (hp < 0) hp = 0;
-    std::cout << name << " took " << dmg << " dmg. Remaining HP: " << hp << std::endl;
 }
 
 void Unit::setX(int new_x) { x = new_x; }
 void Unit::setY(int new_y) { y = new_y; }
 
 void Unit::setHp(int new_hp) { hp = new_hp; }
-
-std::string Unit::getName()const{ return name;}
 
 int Unit::getHp() const { return hp; }
 
@@ -50,6 +47,10 @@ void Unit::resetAction() {
     action.attack="Null";
     action.targetX = -1;
     action.targetY = -1;
+}
+
+int Unit::getCost() const {
+    return cost;
 }
 
 //辅助函数1：验证坐标合法
@@ -76,7 +77,7 @@ void Unit::searchNewTarget(const std::vector<std::vector<Unit*>>& grid,const int
     int minDistance = 100;
     //左
     newTargetX = enemyX;
-    newTargetY = enemyY-1;
+    newTargetY = enemyY-attArea;
     if (isPositionValid(newTargetX,newTargetY,row,col)) {
         if (grid[newTargetX][newTargetY]==nullptr) {
             newDistance = turnPositive(newTargetX-r)+turnPositive(newTargetY-c);
@@ -89,7 +90,7 @@ void Unit::searchNewTarget(const std::vector<std::vector<Unit*>>& grid,const int
     }
     //右
     newTargetX = enemyX;
-    newTargetY = enemyY+1;
+    newTargetY = enemyY+attArea;
     if (isPositionValid(newTargetX,newTargetY,row,col)) {
         if (grid[newTargetX][newTargetY]==nullptr) {
             newDistance = turnPositive(newTargetX-r)+turnPositive(newTargetY-c);
@@ -101,7 +102,7 @@ void Unit::searchNewTarget(const std::vector<std::vector<Unit*>>& grid,const int
         }
     }
     //上
-    newTargetX = enemyX-1;
+    newTargetX = enemyX-attArea;
     newTargetY = enemyY;
     if (isPositionValid(newTargetX,newTargetY,row,col)) {
         if (grid[newTargetX][newTargetY]==nullptr) {
@@ -114,7 +115,7 @@ void Unit::searchNewTarget(const std::vector<std::vector<Unit*>>& grid,const int
         }
     }
     //下
-    newTargetX = enemyX+1;
+    newTargetX = enemyX+attArea;
     newTargetY = enemyY;
     if (isPositionValid(newTargetX,newTargetY,row,col)) {
         if (grid[newTargetX][newTargetY]==nullptr) {
@@ -137,18 +138,19 @@ Action Unit::march(const std::vector<std::vector<Unit*>>& grid,const int row,con
     int loop = 1;
     int target_x = -1;
     int target_y = -1;
-    std::cout <<"--------"<<name <<" start to search" <<"--------" << std::endl;
     while (!isFind && loop < 15) {
-        std::cout<<"search loop: "<<loop<<std::endl;
         for (int k = 0; k <= loop; k++) {
             //上
-            if (isPositionValid(r-loop,c-k,row,col)&&isPositionValid(r-loop,c+k,row,col)) {
+            if (isPositionValid(r-loop,c-k,row,col)) {
                 if (grid[r-loop][c-k]!=nullptr&&grid[r-loop][c-k]->getOwner()!=owner) {
                     isFind = true;
                     target_x = r-loop;
                     target_y = c-k;
                     break;
                 }
+
+            }
+            if (isPositionValid(r-loop,c+k,row,col)) {
                 if (grid[r-loop][c+k]!=nullptr&&grid[r-loop][c+k]->getOwner()!=owner) {
                     isFind = true;
                     target_x = r-loop;
@@ -157,13 +159,15 @@ Action Unit::march(const std::vector<std::vector<Unit*>>& grid,const int row,con
                 }
             }
             //下
-            if (isPositionValid(r+loop,c-k,row,col)&&isPositionValid(r+loop,c+k,row,col)) {
+            if (isPositionValid(r+loop,c-k,row,col)) {
                 if (grid[r+loop][c-k]!=nullptr&&grid[r+loop][c-k]->getOwner()!=owner) {
                     isFind = true;
                     target_x = r+loop;
                     target_y = c-k;
                     break;
                 }
+            }
+            if (isPositionValid(r+loop,c+k,row,col)) {
                 if (grid[r+loop][c+k]!=nullptr&&grid[r+loop][c+k]->getOwner()!=owner) {
                     isFind = true;
                     target_x = r+loop;
@@ -172,13 +176,15 @@ Action Unit::march(const std::vector<std::vector<Unit*>>& grid,const int row,con
                 }
             }
             //左
-            if (isPositionValid(r-k,c-loop,row,col)&&isPositionValid(r+k,c-loop,row,col)) {
+            if (isPositionValid(r-k,c-loop,row,col)) {
                 if (grid[r-k][c-loop]!=nullptr&&grid[r-k][c-loop]->getOwner()!=owner) {
                     isFind = true;
                     target_x = r-k;
                     target_y = c-loop;
                     break;
                 }
+            }
+            if (isPositionValid(r+k,c-loop,row,col)) {
                 if (grid[r+k][c-loop]!=nullptr&&grid[r+k][c-loop]->getOwner()!=owner) {
                     isFind = true;
                     target_x = r+k;
@@ -187,13 +193,15 @@ Action Unit::march(const std::vector<std::vector<Unit*>>& grid,const int row,con
                 }
             }
             //右
-            if (isPositionValid(r+k,c+loop,row,col)&&isPositionValid(r-k,c+loop,row,col)) {
+            if (isPositionValid(r+k,c+loop,row,col)) {
                 if (grid[r+k][c+loop]!=nullptr&&grid[r+k][c+loop]->getOwner()!=owner) {
                     isFind = true;
                     target_x = r+k;
                     target_y = c+loop;
                     break;
                 }
+            }
+            if (isPositionValid(r-k,c+loop,row,col)) {
                 if (grid[r-k][c+loop]!=nullptr&&grid[r-k][c+loop]->getOwner()!=owner) {
                     isFind = true;
                     target_x = r-k;
@@ -205,18 +213,14 @@ Action Unit::march(const std::vector<std::vector<Unit*>>& grid,const int row,con
         loop +=1 ;
     }
     //确定最近敌人的位置：target_x,target_y
-    std::cout<<"get EnemyTarget at "<<target_x<<","<<target_y<<std::endl;
-    std::cout<<"self at: "<<r<<","<<c<<std::endl;
     //先直接写到状态中
     action.targetX = target_x;
     action.targetY = target_y;
 
     //下面进行战斗决策，移动还是攻击，根据距离判断
     int distance = turnPositive(action.targetX-r)+turnPositive(action.targetY-c) ;
-    std::cout<<"distance: "<<distance<<std::endl;
     if (distance<=attArea) {
         //距离合适，返回攻击信号和攻击目标
-        std::cout<<"attack"<<std::endl;
         action.attack = "CommonAtt";
         return action;
     }
@@ -224,10 +228,7 @@ Action Unit::march(const std::vector<std::vector<Unit*>>& grid,const int row,con
     else{
         //距离太远，返回移动信号和移动方向
         //注意选择移动的时候要注意，目标已经不是敌人本身了，应该是敌人四周的空位
-        std::cout<<"move"<<std::endl;
         searchNewTarget(grid,row,col,r,c);
-        std::cout<<"get MoveTarget at "<<action.targetX<<","<<action.targetY<<std::endl;
-
         //确定移动方向
         int dx = action.targetX-r;
         int dy = action.targetY-c;
@@ -254,7 +255,6 @@ Action Unit::march(const std::vector<std::vector<Unit*>>& grid,const int row,con
         if (dx>0&&dy<0) {
             action.move = Dx<=Dy?"Down":"Left";
         }
-        std::cout<<"move: "<<action.move<<std::endl;
         return action;
     }
 }

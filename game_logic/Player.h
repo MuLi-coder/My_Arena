@@ -7,13 +7,27 @@
 
 
 class Player {
+    int refreshTimes;
     int money;
     int hp;
+    int level;
+    int maxUnits;
+    int score;
 public:
     Player();
     //获取信息
+    void changeScore(int score);
+    int getScore()const;
     int getMoney() const;
     int getHp() const;
+    int getShopRefreshTimes() const;
+    void changeShopRefreshTimes(int num);
+    int getLevel()const;
+    void changeLevel(int num);
+    int getMaxUnits()const;
+    void changeHp(int num);
+    void changeMoney(int num);
+    void reset();
 };
 
 

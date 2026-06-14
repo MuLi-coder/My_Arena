@@ -10,7 +10,7 @@
 
 class Mage : public Unit{
 public:
-    Mage(std::string n,int owner=0);
+    Mage(int owner=0);
 };
 
 

@@ -32,7 +32,7 @@ struct Action {
 
 class Unit {
 protected:
-    std::string name;   //名字
+
     int x, y, pos;      //坐标
     int hp;             //生命值
     int maxHp;          //最大生命值
@@ -40,11 +40,11 @@ protected:
     QString image;
     int att;
     int attArea;
-
+    int cost;
     Action action;
 
 public:
-    Unit(std::string n, int owner = 0);
+    Unit(int owner = 0);
     virtual ~Unit() = default;
 
 
@@ -57,13 +57,14 @@ public:
     void resetAction();
     // 获取状态: 名字，生命,横纵坐标，图片路径
 
-    std::string getName() const;
+
     int getHp()const;
     int getX() const;
     int getY() const;
     int getOwner() const;
     int getMaxHp() const;
     int getAtt() const;
+    int getCost()const;
     QString getImage()const;
 
     //combat

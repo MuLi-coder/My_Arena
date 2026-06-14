@@ -13,7 +13,7 @@
 class Knight : public Unit{
     int armor;
 public:
-    Knight(std::string n,int owner = 0);
+    Knight(int owner = 0);
 };
 
 

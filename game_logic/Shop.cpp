@@ -30,14 +30,3 @@ void Shop::placeUnitAt(const int s,Unit *unit) {
 void Shop::removeUnitAt(const int s) {
     shop[s]=nullptr;
 }
-
-std::vector<int> Shop::refresh() {
-    for (int s=0; s<5; s++) {
-        if (randomNum()<50) {
-            intShop[s] = 0;
-        }else {
-            intShop[s] = 1;
-        }
-    }
-    return intShop;
-}

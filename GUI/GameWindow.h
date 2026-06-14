@@ -7,9 +7,9 @@
 #include <QPushButton>
 #include <memory>
 #include "PieceWidget.h"
+#include "ParaWidget.h"
 #include "../game_logic/GameManager.h"
-#include "../entity/Hero/Knight.h"
-#include "../entity/Hero/Mage.h"
+
 
 //这个类我们专门用来显示GUI界面，同时负责向逻辑层的GameManager类传递信息
 class GameWindow : public QMainWindow {
@@ -20,7 +20,6 @@ class GameWindow : public QMainWindow {
 
     //鼠标拖拽事件，拖拽状态记录参数
     bool isDragging;
-    bool isShopping;
     int dragFromRow;
     int dragFromCol;
     int dragFromPos;
@@ -31,9 +30,14 @@ class GameWindow : public QMainWindow {
     std::vector<std::vector<PieceWidget*>> gridWidgets;
     std::vector<PieceWidget*> benchWidgets;
     std::vector<PieceWidget*> shopBenchWidgets;
+    ParaWidget* paraPart;
+
+
     //信号槽函数
 private slots:
     void updateBoardUI(); // 刷新场景显示
+    void resolveMessageShow(ComResult result,int hp);
+    void failToCombatMessage();
 
 public:
     explicit GameWindow(QWidget *parent = nullptr);

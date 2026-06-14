@@ -17,10 +17,24 @@
 #include "../entity/Hero/Knight.h"
 #include "../entity/Hero/Mage.h"
 
+enum class GameLevel {
+    ONE,
+    TWO,
+    THREE,
+    FOUR
+};
+
 enum class GameState {
+    Ready,
     Prepare,
     Combat,
     Resolve
+};
+
+enum class ComResult {
+    Success,
+    Failure,
+    Draw
 };
 
 class GameManager : public QObject{
@@ -30,6 +44,10 @@ class GameManager : public QObject{
     QTimer timer;
     //拥有当前状态，控制游戏核心
     GameState currentState;
+    //拥有战斗结果
+    ComResult result;
+    //拥有关卡进度
+    GameLevel currentLevel;
     //拥有棋盘数据
     std::unique_ptr<PreBoard> preBoard;
     std::unique_ptr<ComBoard> comBoard;
@@ -39,6 +57,7 @@ class GameManager : public QObject{
     std::unique_ptr<Shop> shop;
 
     //状态对应的处理函数
+    void handleReady();
     void handlePrepare();
     void handleCombat();
     void handleResolve();
@@ -48,33 +67,57 @@ public:
     //游戏状态
     GameState getCurrentState() const;
     void changeStateTo(GameState newGameState);
-    void reset();
     bool isTimerActive() const;
     void timerStart();
     void timerStop();
-    bool isComEnd() const;
+    bool isComEnd();
     //棋盘状态
     int getRow() const;
     int getCol() const;
     int getBen() const;
+
     Unit* getUnitAtGrid(int r,int c) const;
     Unit* getUnitAtBench(int pos) const;
     bool isCellEmptyGrid(int r, int c) const;
     bool isCellEmptyBench(int pos) const;
+
     void removeUnitAtGrid(int r, int c);
     void removeUnitAtBench(int pos);
     void placeUnitAtGrid(int r, int c,Unit* unit) ;
     void placeUnitAtBench(int pos,Unit* unit) ;
+    void resetTheGame();
+    void clearEnemyGrid();
 
+    //流程控制
+    int selfUnitCount() const;
+    void setEnemy();
+    void setEnemyRandomly();
+    void goToNextLevel();
     //SHOP
     bool isCellEmptyShop(int s)const;
     Unit* getUnitAtShop(int s)const;
     void placeUnitAtShop(int s,Unit* unit);
     void removeUnitAtShop(int s);
     void refreshShop();
+    void changeShopRefreshTimes(int num);
+
+
+    //PLAYER
+    int getPlayerMoney() const;
+    int getPlayerLevel() const;
+    int getPlayerShopRefreshTimes() const;
+    int getMaxUnit() const;
+    void levelUp();
+    void changePlayerMoney(int num);
+    int getPlayerScore() const;
+    Player* getPlayer() const;
+
+
     //向外发送的信号参数
     signals:
     void shouldUpdate();
+    void enterResolve(ComResult result,int hp);
+    void failToCombat();
 };
 
 

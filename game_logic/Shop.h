@@ -17,7 +17,7 @@ public:
     void removeUnitAt(int s);
     Unit* getUnitAt(int s) const;
     bool isCellEmpty(int s) const;
-    std::vector<int> refresh();
+
 };
 
 #endif //MY_ARENA_SHOP_H

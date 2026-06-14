@@ -102,6 +102,7 @@ void PreBoard::removeUnitAt(int pos) {
 
 
 void PreBoard::rePrepare() {
+    //重置血量等等参数
     for (int r = 0; r < row; r++) {
         for (int c = 0; c < col; c++) {
             if (!this->isCellEmpty(r,c)) {

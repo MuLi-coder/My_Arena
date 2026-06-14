@@ -1,16 +1,16 @@
 #include "GameWindow.h"
 #include <QGridLayout>
 #include <QVBoxLayout>
-
+#include <QMessageBox>
 
 GameWindow::GameWindow(QWidget *parent)
-    : QMainWindow(parent)
-{
+    : QMainWindow(parent) {
     //创建管理者实例
     gameManager = std::make_unique<GameManager>(8,8,8);
-    //将下游信号和刷新函数绑定
+    //将下游信号和各自的槽函数绑定
     connect(gameManager.get(),&GameManager::shouldUpdate,this,&GameWindow::updateBoardUI);
-
+    connect(gameManager.get(),&GameManager::enterResolve,this,&GameWindow::resolveMessageShow);
+    connect(gameManager.get(),&GameManager::failToCombat,this,&GameWindow::failToCombatMessage);
     // 状态记录参数的初始化
     isDragging = false;
     dragFromRow = -1;
@@ -18,14 +18,8 @@ GameWindow::GameWindow(QWidget *parent)
     dragFromPos = -1;
     dragHero = nullptr;
 
-    // //---------------测试棋子------------
-    gameManager->placeUnitAtGrid(2,2,new Knight("Knight 1",1));
-    gameManager->placeUnitAtGrid(3,3,new Knight("Knight 2",1));
-    gameManager->placeUnitAtGrid(2,5,new Mage("Mage 1",1));
-    // //---------------------------------
-    gameManager->refreshShop();
+    //--------------------------下面剩下的就是画图的部分的初始化-----------------------------//
 
-    //--------------------------下面就是画图的部分的初始化-----------------------------//
     // 1. 设置窗口基础属性
     setWindowTitle("my_Arena");
     resize(600, 800); // 稍微调高一点窗口，给上下备战区留出足够空间
@@ -120,7 +114,10 @@ GameWindow::GameWindow(QWidget *parent)
     rightVLayout->setSpacing(20);
 
     //-------------第一部分，控制面板---------------//
-
+    //使用自己定义的控件，用于更新数据
+    paraPart = new ParaWidget(this);
+    paraPart->setPara(gameManager->getPlayer());
+    rightVLayout->addWidget(paraPart);
 
     //-----------第二部分，画下方的开始结束按钮---------
     //大框控件
@@ -128,24 +125,47 @@ GameWindow::GameWindow(QWidget *parent)
     controlButtonPart->setStyleSheet("border:1px solid gray;background:white");
     controlButtonPart->setFixedSize(CELL_SIZE*gameManager->getBen(), CELL_SIZE+8);
     QHBoxLayout* controlButtonLayout = new QHBoxLayout(controlButtonPart);
-    // 第一个开始战斗按钮
-    QPushButton* combatButton = new QPushButton("Combat", controlButtonPart); // 直接传入文字和父控件
-    combatButton->setFixedSize(70, 40);
-    combatButton->setStyleSheet("color:red;border: 1px solid gray; background:white ;");
-    //将按钮绑定需要激发的函数：切换战斗阶段
-    connect(combatButton, &QPushButton::clicked, this, [=]() {
-        gameManager->changeStateTo(GameState::Combat);
-    });
 
-    // 第二个返回备战按钮
+    //升级按钮
+    QPushButton* levelUpButton = new QPushButton("LevelUp(5)", controlButtonPart);
+    levelUpButton->setFixedSize(70, 40);
+    levelUpButton->setStyleSheet("color:red; border: 1px solid gray; background: white;");
+    //将按钮绑定需要激发的函数：准换到备战阶段
+    connect(levelUpButton, &QPushButton::clicked, this, [=]() {
+        if (gameManager->getCurrentState()==GameState::Prepare) {
+            if (gameManager->getPlayerMoney()<5) {
+                QMessageBox::information(this, "失败", "金币不足");
+                return;
+            }
+            if (gameManager->getPlayerLevel()==7) {
+                QMessageBox::information(this,"失败","已 7 级满级");
+                return;
+            }
+            gameManager->levelUp();
+            gameManager->changePlayerMoney(-5);
+            updateBoardUI();
+        }
+    });
+    // 第一个返回备战按钮
     QPushButton* prepareButton = new QPushButton("Prepare", controlButtonPart);
     prepareButton->setFixedSize(70, 40);
     prepareButton->setStyleSheet("color:red; border: 1px solid gray; background: white;");
     //将按钮绑定需要激发的函数：准换到备战阶段
     connect(prepareButton, &QPushButton::clicked, this, [=]() {
-        gameManager->changeStateTo(GameState::Prepare);
+        if (gameManager->getCurrentState()==GameState::Combat) {
+            gameManager->changeStateTo(GameState::Prepare);
+        }
     });
-
+    // 第二个开始战斗按钮
+    QPushButton* combatButton = new QPushButton("Combat", controlButtonPart); // 直接传入文字和父控件
+    combatButton->setFixedSize(70, 40);
+    combatButton->setStyleSheet("color:red;border: 1px solid gray; background:white ;");
+    //将按钮绑定需要激发的函数：切换战斗阶段
+    connect(combatButton, &QPushButton::clicked, this, [=]() {
+        if (gameManager->getCurrentState()==GameState::Prepare) {
+            gameManager->changeStateTo(GameState::Combat);
+        }
+    });
     //第三个暂停按钮
     QPushButton* pauseButton = new QPushButton("Pause", controlButtonPart);
     pauseButton->setFixedSize(70, 40);
@@ -160,38 +180,92 @@ GameWindow::GameWindow(QWidget *parent)
            }
        }
     });
-    //添加到水平布局中
+    //第四个开始游戏按钮
+    QPushButton* startButton = new QPushButton("START", controlButtonPart);
+    startButton->setFixedSize(70, 40);
+    startButton->setStyleSheet("color:white; border: 1px solid gray; background: purple;");
+    //将按钮绑定需要激发的函数：准换到备战阶段
+    connect(startButton, &QPushButton::clicked, this, [=]() {
+        if (gameManager->getCurrentState()==GameState::Ready) {
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("提示");
+            msgBox.setText(QString(
+                "----------游戏开始------------\n"
+                "你初始有金币:  %1\n"
+                "你一共有 %2 次刷新商店的机会"
+                )
+                .arg(gameManager->getPlayerMoney())
+                .arg(gameManager->getPlayerShopRefreshTimes())
+                );
+            msgBox.exec();
+            gameManager->refreshShop();
+            gameManager->changeStateTo(GameState::Prepare);
+        }
+    });
+
+    //将四个按钮添加到水平布局中
+    controlButtonLayout->addWidget(levelUpButton);
     controlButtonLayout->addWidget(prepareButton);
     controlButtonLayout->addWidget(combatButton);
     controlButtonLayout->addWidget(pauseButton);
+    controlButtonLayout->addWidget(startButton);
     controlButtonLayout->setAlignment(Qt::AlignCenter);
     //将水平布局添加到窗口布局中
     rightVLayout->addWidget(controlButtonPart,1,Qt::AlignCenter);
+
     //---------------第三部分，商店----------------------//
     QWidget* shopPart = new QWidget(this);
-    shopPart->setStyleSheet("border:1px solid gray;background:white");
+    shopPart->setStyleSheet("background:white");
     shopPart->setFixedSize(CELL_SIZE*gameManager->getBen(), 3*CELL_SIZE+8);
     QVBoxLayout* shopLayout = new QVBoxLayout(shopPart);
     shopLayout->setContentsMargins(0, 0, 0, 0);
     shopLayout->setSpacing(5);
     //-----上方文字标签和刷新按钮-----
-    QHBoxLayout* upperShopLayout = new QHBoxLayout(shopPart);
+    QWidget* shopUpPart = new QWidget(shopPart);
+    shopUpPart->setFixedSize(CELL_SIZE*gameManager->getBen(), CELL_SIZE);
+    shopUpPart->setStyleSheet("border:0.3px");
+    QHBoxLayout* upperShopLayout = new QHBoxLayout(shopUpPart);
     upperShopLayout->setContentsMargins(0, 0, 0, 0);
     upperShopLayout->setSpacing(20);
+
     //文字标签
     QLabel* shopLabel = new QLabel("SHOP");
     shopLabel->setStyleSheet("color:black;border:1px solid gray;background:white");
     shopLabel->setFixedSize(CELL_SIZE, CELL_SIZE-10);
     shopLabel->setAlignment(Qt::AlignCenter);
     //刷新按钮
-    QPushButton* refreshButton = new QPushButton("refresh",shopPart);
+    QPushButton* refreshButton = new QPushButton(shopPart);
+    refreshButton->setText(QString("refresh(2)"));
     refreshButton->setFixedSize(70, 40);
-    refreshButton->setStyleSheet("background:#ed897b;border: 1px solid gray; ");
-    //绑定激发的函数
+    refreshButton->setStyleSheet("color:red;border:1px solid gray;background:white;");
     connect(refreshButton, &QPushButton::clicked, this, [=]() {
-        gameManager->refreshShop();
-        updateBoardUI();
+        if (gameManager->getCurrentState()==GameState::Prepare) {
+            int ret = QMessageBox::question(
+                    this,
+                    "确认操作",
+                    "确定要刷新商店吗",
+                    QMessageBox::Yes | QMessageBox::No,
+                    QMessageBox::No
+                );
+
+            if (ret == QMessageBox::Yes) {
+                if (gameManager->getPlayerShopRefreshTimes()==0) {
+                    QMessageBox::information(this,"操作失败！",QString("刷新次数已耗尽"));
+                    return;
+                };
+                if (gameManager->getPlayerMoney()<2) {
+                    QMessageBox::information(this,"失败","金币不足");
+                    return;
+                }
+                gameManager->refreshShop();
+                gameManager->changeShopRefreshTimes(-1);
+                gameManager->changePlayerMoney(-2);
+                updateBoardUI();
+                QMessageBox::information(this,"操作成功！",QString("商店刷新,剩余刷新次数：%1").arg(gameManager->getPlayerShopRefreshTimes()));
+            }
+        }
     });
+
     upperShopLayout->addWidget(shopLabel,1,Qt::AlignCenter);
     upperShopLayout->addWidget(refreshButton,1,Qt::AlignCenter);
 
@@ -201,7 +275,6 @@ GameWindow::GameWindow(QWidget *parent)
     // 设置水平布局
     QHBoxLayout *shopBenchLayout = new QHBoxLayout(shopBenchPart);
     shopBenchLayout->setSpacing(5);
-
     for (int c = 0; c < 5; ++c) {
         // 创建单个格子控件
         QWidget* cell = new QWidget();
@@ -222,7 +295,7 @@ GameWindow::GameWindow(QWidget *parent)
     shopBenchLayout->setAlignment(Qt::AlignHCenter);
 
     //加入shopPart
-    shopLayout->addLayout(upperShopLayout);
+    shopLayout->addWidget(shopUpPart);
     shopLayout->addWidget(shopBenchPart, 0,Qt::AlignCenter);
     shopLayout->setAlignment(Qt::AlignCenter);
     //商店画完，加入右侧垂直布局
@@ -232,8 +305,6 @@ GameWindow::GameWindow(QWidget *parent)
     windowLayout->addLayout(rightVLayout);
     //------------------------画图部分结束-----------------------------//
 
-    // 刷新棋盘显示
-    this->updateBoardUI();
 }
 
 
@@ -281,12 +352,15 @@ void GameWindow::mouseReleaseEvent(QMouseEvent *event) {
         for (int r = gameManager->getRow()-1; r >= gameManager->getRow()/2; --r) {
             for (int c = 0; c < gameManager->getCol(); ++c) {
                 if (gridWidgets[r][c] == releaseWidget && gameManager->isCellEmptyGrid(r,c)) {
-                    //找到对应空格并落子
-                    gameManager->placeUnitAtGrid(r,c,dragHero);
-                    gameManager->removeUnitAtGrid(dragFromRow,dragFromCol);
-                    gameManager->removeUnitAtBench(dragFromPos);
-                    isFind = true;
-                    break;
+                    if ( (dragFromPos!=-1 && gameManager->selfUnitCount()<gameManager->getMaxUnit())|| (dragFromRow!=-1 && dragFromCol != -1) ) {
+                        //找到对应空格并落子
+                        gameManager->placeUnitAtGrid(r,c,dragHero);
+                        gameManager->removeUnitAtGrid(dragFromRow,dragFromCol);
+                        gameManager->removeUnitAtBench(dragFromPos);
+                        isFind = true;
+                        break;
+                    }
+                    QMessageBox::information(this,"操作失败","人数已达上限");
                 }
             }
             if (isFind) {break;}
@@ -320,20 +394,37 @@ void GameWindow::mouseDoubleClickEvent(QMouseEvent *event) {
         for (int s=0;s<5;++s) {
             if (doubleClickWidget==shopBenchWidgets[s] && !gameManager->isCellEmptyShop(s)) {
                 shopHero = gameManager->getUnitAtShop(s);
-                bool isBoughtSucceed=false;
-                for (int k=0;k<gameManager->getBen();++k) {
-                    if (gameManager->isCellEmptyBench(k)) {
-                        gameManager->placeUnitAtBench(k,shopHero);
-                        isBoughtSucceed = true;
-                        break;
+                //弹窗提示
+                int ret = QMessageBox::question(
+                    this,
+                    "确认操作",
+                    "确定要购买该英雄吗",
+                    QMessageBox::Yes | QMessageBox::No,
+                    QMessageBox::No
+                );
+
+                if (ret == QMessageBox::Yes){
+                    for (int k=0;k<gameManager->getBen();++k) {
+                        if (gameManager->isCellEmptyBench(k)) {
+                            if (gameManager->getPlayerMoney() < gameManager->getUnitAtShop(s)->getCost()) {
+                                QMessageBox::information(this,"失败","金币不足");
+                                break;
+                            }
+                            gameManager->placeUnitAtBench(k,shopHero);
+                            gameManager->changePlayerMoney((-1)*gameManager->getUnitAtShop(s)->getCost());
+                            gameManager->removeUnitAtShop(s);
+                            break;
+                        }
+                        if (k==gameManager->getBen()-1) {
+                            QMessageBox::information(this,"失败","备战区已满");
+                            break;
+                        }
                     }
-                }
-                if (isBoughtSucceed) {
-                    gameManager->removeUnitAtShop(s);
                 }
             }
         }
     }
+    updateBoardUI();
     QWidget::mouseDoubleClickEvent(event);
 }
 
@@ -342,7 +433,24 @@ void GameWindow::mouseDoubleClickEvent(QMouseEvent *event) {
 void GameWindow::updateBoardUI() {
     GameState state = gameManager->getCurrentState();
     // 备战时刷新逻辑,严格根据棋子数据位置定位，board层数据垂直映射
-    if (state==GameState::Prepare) {
+    if (state ==GameState::Ready) {
+        for (int r = 0; r < gameManager->getRow(); ++r) {
+            for (int c = 0; c < gameManager->getCol(); ++c) {
+                PieceWidget* w = gridWidgets[r][c];
+                w->setUnit(nullptr);
+            }
+        }
+        for (int k =0; k < gameManager->getBen(); ++k) {
+            PieceWidget* w = benchWidgets[k];
+            w->setUnit(nullptr);
+        }
+        for (int r = 0; r < 5; ++r) {
+            PieceWidget* w = shopBenchWidgets[r];
+            w->setUnit(nullptr);
+        }
+    }
+
+    else if (state==GameState::Prepare || state==GameState::Resolve) {
         for (int r = 0; r < gameManager->getRow(); ++r) {
             for (int c = 0; c < gameManager->getCol(); ++c) {
                 PieceWidget* w = gridWidgets[r][c];
@@ -352,10 +460,6 @@ void GameWindow::updateBoardUI() {
         for (int k = 0; k < gameManager->getBen(); ++k) {
             PieceWidget* w = benchWidgets[k];
             w->setUnit(gameManager->getUnitAtBench(k));
-        }
-        for (int s=0; s < 5; ++s) {
-            PieceWidget* w = shopBenchWidgets[s];
-            w->setUnit(gameManager->getUnitAtShop(s));
         }
     }
 
@@ -371,12 +475,65 @@ void GameWindow::updateBoardUI() {
             PieceWidget* w = benchWidgets[k];
             w->setUnit(gameManager->getUnitAtBench(k));
         }
-        for (int s=0; s < 5; ++s) {
-            PieceWidget* w = shopBenchWidgets[s];
-            w->setUnit(gameManager->getUnitAtShop(s));
-        }
+    }
+    //刷新商店
+    for (int s=0; s < 5; ++s) {
+        PieceWidget* w = shopBenchWidgets[s];
+        w->setUnit(gameManager->getUnitAtShop(s));
+    }
+    //刷新面板
+    paraPart->setPara(gameManager->getPlayer());
+}
+
+
+void GameWindow::resolveMessageShow(ComResult result,const int hp) {
+    switch (result) {
+        case ComResult::Success:
+            QMessageBox::information(this,"结算",
+                "-----SUCCESS-----\n"
+                "恭喜您，战斗获得了胜利\n"
+                "奖励 15 金币, 积分+10\n"
+                "同时，您的商店刷新次数已被重置为 3 次\n"
+                "继续乘胜追击吧！"
+                );
+            break;
+        case ComResult::Failure:
+            if (hp!=0) {
+                QMessageBox::information(this,"结算",
+                    "-----FAILURE-----\n"
+                    "很遗憾，没能乘胜追击\n"
+                    "补贴 5 金币, hp-20\n"
+                    "虽然如此，您的商店刷新次数也已被重置为 3 次\n"
+                    "再接再厉！"
+                    );
+                break;
+            }else {
+                QMessageBox::information(this,"GAME OVER",
+                    QString(
+                        "GAME OVER\n"
+                        "您的血量已经清零，漫漫征途就此止步\n"
+                        "本次积分： %1").arg(gameManager->getPlayerScore())
+                        );
+                break;
+            }
+
+        case ComResult::Draw:
+            QMessageBox::information(this,"结算",
+                "-----DRAW-----\n"
+                "这是一场势均力敌的战斗\n"
+                "奖励 10 金币, 积分+5, hp-10\n"
+                "您的商店刷新次数也已被重置为 3 次\n"
+                "调整阵容，一鼓作气！"
+                );
+            break;
     }
 }
+
+void GameWindow::failToCombatMessage() {
+    QMessageBox::information(this,"操作失败","请先派出战斗英雄");
+}
+
+
 
 PieceWidget* GameWindow::getPieceWidget(const int r,const int c) {
     if (r>=0 && r<gameManager->getRow() && c>=0 && c< gameManager->getCol()) {

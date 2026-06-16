@@ -8,9 +8,10 @@
 #include <memory>
 #include "PieceWidget.h"
 #include "ParaWidget.h"
+#include "EquipWidget.h"
 #include "../game_logic/GameManager.h"
 
-
+#include "../entity/Equipment/Sword.h"
 //这个类我们专门用来显示GUI界面，同时负责向逻辑层的GameManager类传递信息
 class GameWindow : public QMainWindow {
     Q_OBJECT
@@ -20,16 +21,20 @@ class GameWindow : public QMainWindow {
 
     //鼠标拖拽事件，拖拽状态记录参数
     bool isDragging;
+    bool isEquipping;
     int dragFromRow;
     int dragFromCol;
     int dragFromPos;
+    int dragFromEquip;
     Unit* dragHero;
     Unit* shopHero;
+    Equipment* dragEquipment;
 
     // 页面，需要维护的数据
     std::vector<std::vector<PieceWidget*>> gridWidgets;
     std::vector<PieceWidget*> benchWidgets;
     std::vector<PieceWidget*> shopBenchWidgets;
+    std::vector<EquipWidget*> equipWidgets;
     ParaWidget* paraPart;
 
 

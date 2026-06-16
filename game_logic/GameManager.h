@@ -37,6 +37,11 @@ enum class ComResult {
     Draw
 };
 
+struct Position {
+    int x;
+    int y;
+};
+
 class GameManager : public QObject{
     Q_OBJECT
 
@@ -55,6 +60,9 @@ class GameManager : public QObject{
     std::unique_ptr<Player> player;
     //拥有商店数据
     std::unique_ptr<Shop> shop;
+    //拥有武器库
+    std::vector<Equipment*> equipment;
+
 
     //状态对应的处理函数
     void handleReady();
@@ -64,42 +72,44 @@ class GameManager : public QObject{
 
 public:
     GameManager(int r=8, int c=8,int pos=8);
-    //游戏状态
+    //游戏流程
     GameState getCurrentState() const;
     void changeStateTo(GameState newGameState);
     bool isTimerActive() const;
     void timerStart();
     void timerStop();
     bool isComEnd();
-    //棋盘状态
-    int getRow() const;
-    int getCol() const;
-    int getBen() const;
-
-    Unit* getUnitAtGrid(int r,int c) const;
-    Unit* getUnitAtBench(int pos) const;
-    bool isCellEmptyGrid(int r, int c) const;
-    bool isCellEmptyBench(int pos) const;
-
-    void removeUnitAtGrid(int r, int c);
-    void removeUnitAtBench(int pos);
-    void placeUnitAtGrid(int r, int c,Unit* unit) ;
-    void placeUnitAtBench(int pos,Unit* unit) ;
     void resetTheGame();
-    void clearEnemyGrid();
-
-    //流程控制
     int selfUnitCount() const;
     void setEnemy();
     void setEnemyRandomly();
     void goToNextLevel();
+    void clearEnemyGrid();
+    //棋盘状态
+    int getRow() const;
+    int getCol() const;
+    int getBen() const;
+    Unit* getUnitAtGrid(int r,int c) const;
+    Unit* getUnitAtBench(int pos) const;
+    bool isCellEmptyGrid(int r, int c) const;
+    bool isCellEmptyBench(int pos) const;
+    void removeUnitAtGrid(int r, int c);
+    void removeUnitAtBench(int pos);
+    void placeUnitAtGrid(int r, int c,Unit* unit) ;
+    void placeUnitAtBench(int pos,Unit* unit) ;
+
+    //装备库
+    Equipment* getEquipmentAt(int s) const;
+    bool isEquipmentEmpty(int s) const;
+    void placeEquipmentAt(int s,Equipment* equipment);
+    void removeEquipmentAt(int s);
     //SHOP
     bool isCellEmptyShop(int s)const;
     Unit* getUnitAtShop(int s)const;
     void placeUnitAtShop(int s,Unit* unit);
     void removeUnitAtShop(int s);
     void refreshShop();
-    void changeShopRefreshTimes(int num);
+    void autoMergeToBench(int k);
 
 
     //PLAYER
@@ -110,6 +120,9 @@ public:
     void levelUp();
     void changePlayerMoney(int num);
     int getPlayerScore() const;
+    void changeShopRefreshTimes(int num);
+
+
     Player* getPlayer() const;
 
 

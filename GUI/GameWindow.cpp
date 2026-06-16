@@ -13,11 +13,17 @@ GameWindow::GameWindow(QWidget *parent)
     connect(gameManager.get(),&GameManager::failToCombat,this,&GameWindow::failToCombatMessage);
     // 状态记录参数的初始化
     isDragging = false;
+    isEquipping = false;
     dragFromRow = -1;
     dragFromCol = -1;
     dragFromPos = -1;
+    dragFromEquip = -1;
+    dragEquipment = nullptr;
+    shopHero = nullptr;
     dragHero = nullptr;
 
+    //测试装备
+    gameManager->placeEquipmentAt(2,new Sword());
     //--------------------------下面剩下的就是画图的部分的初始化-----------------------------//
 
     // 1. 设置窗口基础属性
@@ -213,7 +219,35 @@ GameWindow::GameWindow(QWidget *parent)
     //将水平布局添加到窗口布局中
     rightVLayout->addWidget(controlButtonPart,1,Qt::AlignCenter);
 
-    //---------------第三部分，商店----------------------//
+    //----------------第三部分：主动装备----------------//
+    QWidget* equipPart = new QWidget();
+    equipPart->setStyleSheet("background:white;border:1px solid ;");
+    // 设置水平布局
+    QHBoxLayout *equipLayout = new QHBoxLayout(equipPart);
+    equipLayout->setSpacing(5);
+    for (int c = 0; c < 5; ++c) {
+        // 创建单个格子控件
+        QWidget* cell = new QWidget();
+        cell->setFixedSize(CELL_SIZE, CELL_SIZE);
+        cell->setStyleSheet("border: 1px solid gray; background: #fff7f0;");
+        //给每个格子创建垂直布局
+        QVBoxLayout* cellLayout = new QVBoxLayout(cell);
+        cellLayout->setContentsMargins(0, 0, 0, 0);
+        // 创建棋子控件，并把棋子控件放入格子的布局
+        EquipWidget* equipWidget = new EquipWidget(cell);
+        cellLayout->addWidget(equipWidget, 0, Qt::AlignCenter);
+        // 把整个格子加入水平布局
+        equipLayout->addWidget(cell);
+
+        // Data: 记录
+        equipWidgets.push_back(equipWidget);
+    }
+    equipLayout->setAlignment(Qt::AlignHCenter);
+
+    rightVLayout->addWidget(equipPart);
+
+
+    //---------------第四部分，商店----------------------//
     QWidget* shopPart = new QWidget(this);
     shopPart->setStyleSheet("background:white");
     shopPart->setFixedSize(CELL_SIZE*gameManager->getBen(), 3*CELL_SIZE+8);
@@ -335,7 +369,17 @@ void GameWindow::mousePressEvent(QMouseEvent *event) {
                 dragFromPos = k;
                 benchWidgets[k]->setStyleSheet("background-color: #ffffcc; border: 3px solid yellow;");
                 return;
-                // std::cout<<"parameter: "<< dragFromRow<<" , "<<dragFromCol<<" , "<<dragFromPos<<std::endl;
+            }
+        }
+        //还可能是装备区
+        std::cout<<clickedWidget<<std::endl;
+        for (int s = 0;s<5;++s) {
+            if (equipWidgets[s]== clickedWidget && !gameManager->isEquipmentEmpty(s)) {
+                isEquipping = true;
+                dragEquipment = gameManager->getEquipmentAt(s);
+                dragFromEquip = s;
+                equipWidgets[s]->setStyleSheet("background-color: #ffffcc; border: 3px solid yellow;");
+                return;
             }
         }
     }
@@ -366,24 +410,62 @@ void GameWindow::mouseReleaseEvent(QMouseEvent *event) {
             if (isFind) {break;}
         }
         //如果是bench，遍历备战区
-        for (int k = 0; k < gameManager->getBen(); ++k) {
-            if (benchWidgets[k] == releaseWidget && gameManager->isCellEmptyBench(k)) {
-                //找到空格并且落子
-                gameManager->placeUnitAtBench(k,dragHero);
-                gameManager->removeUnitAtGrid(dragFromRow,dragFromCol);
-                gameManager->removeUnitAtBench(dragFromPos);
-                isFind = true;
-                break;
+        if (!isFind) {
+            for (int k = 0; k < gameManager->getBen(); ++k) {
+                if (benchWidgets[k] == releaseWidget && gameManager->isCellEmptyBench(k)) {
+                    //找到空格并且落子
+                    gameManager->placeUnitAtBench(k,dragHero);
+                    gameManager->removeUnitAtGrid(dragFromRow,dragFromCol);
+                    gameManager->removeUnitAtBench(dragFromPos);
+                    break;
+                }
             }
         }
     }
+
+    //还有可能是穿装备
+    else if (event->button()== Qt::LeftButton && isEquipping) {
+        QWidget *releaseWidget = childAt(event->pos());
+        if (!releaseWidget) return;
+        //找到松手位置
+        bool isFind = false;
+        for (int r = gameManager->getRow()-1; r >= gameManager->getRow()/2; --r) {
+            for (int c = 0; c < gameManager->getCol(); ++c) {
+                if (gridWidgets[r][c] == releaseWidget && !gameManager->isCellEmptyGrid(r,c)) {
+                    gameManager->getUnitAtGrid(r,c)->putOnEquipment(dragEquipment);
+                    gameManager->getUnitAtGrid(r,c)->selfRefresh();
+                    gameManager->removeEquipmentAt(dragFromEquip);
+                    isFind = true;
+                    break;
+                }
+            }
+            if (isFind) {break;}
+        }
+        //如果是bench，遍历备战区
+        if (!isFind) {
+            for (int k = 0; k < gameManager->getBen(); ++k) {
+                if (benchWidgets[k] == releaseWidget && !gameManager->isCellEmptyBench(k)) {
+                    gameManager->getUnitAtBench(k)->putOnEquipment(dragEquipment);
+                    gameManager->getUnitAtBench(k)->selfRefresh();
+                    gameManager->removeEquipmentAt(dragFromEquip);
+                    break;
+                }
+            }
+        }
+
+    }
+
     //移动完毕，刷新GUI界面显示，重置参数
     updateBoardUI();
     isDragging = false;
+    isEquipping = false;
     dragFromRow = -1;
     dragFromCol = -1;
     dragFromPos = -1;
+    dragFromEquip = -1;
+    shopHero = nullptr;
     dragHero= nullptr;
+    dragEquipment= nullptr;
 }
 
 //双击购买逻辑
@@ -398,7 +480,7 @@ void GameWindow::mouseDoubleClickEvent(QMouseEvent *event) {
                 int ret = QMessageBox::question(
                     this,
                     "确认操作",
-                    "确定要购买该英雄吗",
+                    QString("确定要购买该英雄吗?售价：%1 金币").arg(shopHero->getCost()),
                     QMessageBox::Yes | QMessageBox::No,
                     QMessageBox::No
                 );
@@ -413,6 +495,8 @@ void GameWindow::mouseDoubleClickEvent(QMouseEvent *event) {
                             gameManager->placeUnitAtBench(k,shopHero);
                             gameManager->changePlayerMoney((-1)*gameManager->getUnitAtShop(s)->getCost());
                             gameManager->removeUnitAtShop(s);
+                            //实现购买之后，要有自动合并升级的功能
+                            gameManager->autoMergeToBench(k);
                             break;
                         }
                         if (k==gameManager->getBen()-1) {
@@ -432,7 +516,7 @@ void GameWindow::mouseDoubleClickEvent(QMouseEvent *event) {
 // 刷新棋盘显示
 void GameWindow::updateBoardUI() {
     GameState state = gameManager->getCurrentState();
-    // 备战时刷新逻辑,严格根据棋子数据位置定位，board层数据垂直映射
+
     if (state ==GameState::Ready) {
         for (int r = 0; r < gameManager->getRow(); ++r) {
             for (int c = 0; c < gameManager->getCol(); ++c) {
@@ -461,6 +545,7 @@ void GameWindow::updateBoardUI() {
             PieceWidget* w = benchWidgets[k];
             w->setUnit(gameManager->getUnitAtBench(k));
         }
+
     }
 
     //战斗时刷新逻辑，更换更新逻辑，数据源来自ComBoard
@@ -483,6 +568,11 @@ void GameWindow::updateBoardUI() {
     }
     //刷新面板
     paraPart->setPara(gameManager->getPlayer());
+    //刷新装备
+    for (int r = 0; r < 5; ++r) {
+        EquipWidget* e = equipWidgets[r];
+        e->setEquip(gameManager->getEquipmentAt(r));
+    }
 }
 
 
@@ -492,7 +582,7 @@ void GameWindow::resolveMessageShow(ComResult result,const int hp) {
             QMessageBox::information(this,"结算",
                 "-----SUCCESS-----\n"
                 "恭喜您，战斗获得了胜利\n"
-                "奖励 15 金币, 积分+10\n"
+                "奖励 20 金币, 积分+10\n"
                 "同时，您的商店刷新次数已被重置为 3 次\n"
                 "继续乘胜追击吧！"
                 );
@@ -502,7 +592,7 @@ void GameWindow::resolveMessageShow(ComResult result,const int hp) {
                 QMessageBox::information(this,"结算",
                     "-----FAILURE-----\n"
                     "很遗憾，没能乘胜追击\n"
-                    "补贴 5 金币, hp-20\n"
+                    "补贴 10 金币, hp-20\n"
                     "虽然如此，您的商店刷新次数也已被重置为 3 次\n"
                     "再接再厉！"
                     );
@@ -521,7 +611,7 @@ void GameWindow::resolveMessageShow(ComResult result,const int hp) {
             QMessageBox::information(this,"结算",
                 "-----DRAW-----\n"
                 "这是一场势均力敌的战斗\n"
-                "奖励 10 金币, 积分+5, hp-10\n"
+                "奖励 15 金币, 积分+5, hp-10\n"
                 "您的商店刷新次数也已被重置为 3 次\n"
                 "调整阵容，一鼓作气！"
                 );

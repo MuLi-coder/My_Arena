@@ -36,9 +36,6 @@ public:
     void removeUnitAt(int r, int c);
     void removeUnitAt(int pos);
 
-    //combat
-
-    void rePrepare();
 };
 
 #endif //MY_ARENA_PREBOARD_H

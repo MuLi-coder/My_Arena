@@ -38,6 +38,11 @@ add_executable(my_Arena
         game_logic/Shop.h
         GUI/ParaWidget.cpp
         GUI/ParaWidget.h
+        GUI/EquipWidget.cpp
+        GUI/EquipWidget.h
+        entity/Equipment.cpp
+        entity/Equipment.h
+        entity/Equipment/Sword.h
 )
 
 # 4. 把 Qt 的库链接到我们的程序上

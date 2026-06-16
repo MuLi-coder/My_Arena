@@ -3,18 +3,62 @@
 //
 #include "../Unit.h"
 #include "Knight.h"
-#include<iostream>
-#include<string>
 #include <QString>
 
-Knight::Knight(int owner)
-    :Unit( owner) {
-    hp = 100;
-    maxHp = 100;
-    armor = 50;
-    att = 8;
+Knight::Knight(int owner,int level)
+    :Unit(owner,level) {
+    name="Knight";
     image = "../images/Knight.png";
-    attArea =1;
-    cost = 1;
+    cost = 4;
+    maxHp = 100;
+    maxMana = 5 ;
+    att = 8;
+    attSpeed = 5;
+    attArea =1 ;
+    moveSpeed = 5;
+    //动态属性初始化
+    hp = maxHp;
+    mana = maxMana;
+    moveCD = moveSpeed;
+    attCD = attSpeed;
+}
+
+
+void Knight::selfRefresh() {
+    //备战状态根据等级和buff对属性进行重置
+    putOnEquipment(equipment);
+    cost  = 4+(level-1)*5;
+    maxHp = 100+(level-1)*20 + hpBuff;
+    maxMana = 5 - (level-1) - manaBuff >= 1 ?  5 - (level-1) - manaBuff:1;
+    att = 8+(level-1)*5 + attBuff;
+    attSpeed = 5 - (level-1) - attSpeedBuff >= 1 ? 5 - (level-1) - attSpeedBuff : 1;
+    attArea = 1 + attAreaBuff;
+    moveSpeed = 5 - (level-1) - moveSpeedBuff >= 1 ? 5 - (level-1) - moveSpeedBuff : 1;
+    //动态属性重置
+    hp = maxHp;
+    mana = maxMana;
+    moveCD = moveSpeed;
+    attCD = attSpeed;
+    //战斗参数重置
+    state = UnitState::Idle;
+    action.move="Null";
+    action.attack="Null";
+    action.targetX=-1;
+    action.targetY=-1;
+}
+
+void Knight::skillAttack(const std::vector<std::vector<Unit *> > &grid, int row, int col, int r, int c) {
+    int heavyAtt = att;
+    int num = randomNum();
+    if (num>70) {
+        heavyAtt = att*2;
+    }
+    else if (num>30) {
+        heavyAtt = att*1.7;
+    }
+    else {
+        heavyAtt = att*1.4;
+    }
+    grid[action.targetX][action.targetY]->takeDamage(heavyAtt);
 }
 

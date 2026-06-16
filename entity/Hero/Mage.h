@@ -4,13 +4,15 @@
 
 #ifndef MY_ARENA_MAGE_H
 #define MY_ARENA_MAGE_H
-#include <iostream>
-#include <QString>
+
 #include "../Unit.h"
 
 class Mage : public Unit{
 public:
-    Mage(int owner=0);
+    Mage(int owner=0,int level = 1);
+
+    void selfRefresh() override;
+    void skillAttack(const std::vector<std::vector<Unit *>> &grid, int row, int col, int r, int c) override;
 };
 
 

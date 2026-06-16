@@ -14,6 +14,7 @@ Player::Player() {
     hp = 100;
     level = 1;
     maxUnits = level;
+    score = 0;
 }
 
 int Player::getMoney() const { return money; }

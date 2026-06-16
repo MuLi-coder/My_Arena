@@ -2,46 +2,162 @@
 #include <string>
 #include "Unit.h"
 
-
-
-Unit::Unit(int owner)
-        : owner(owner){
-    hp = 10;
-    x = 0;
-    y = 0;
+Unit::Unit(const int owner,const int level)
+        : owner(owner),level(level){
     action.move="Null";
     action.attack ="Null";
     action.targetX = -1;
     action.targetY = -1;
+    state = UnitState::Idle;
+    //装备buff初始化
+    equipment = nullptr;
+    hpBuff = 0;
+    attBuff = 0;
+    attSpeedBuff = 0;
+    attAreaBuff = 0;
+    moveSpeedBuff = 0;
+    manaBuff = 0;
+}
+QString Unit::getName()const {
+    return name;
+}
+QString Unit::getTrait()const {
+    return trait;
+}
+QString Unit::getImage()const {
+    return image;
+}
+int Unit::getOwner() const {
+    return owner;
+}
+int Unit::getLevel() const {
+    return level;
+}
+void Unit::changeLevel(int num) {
+    level+=num;
+    if (level<=0) {
+        level = 1;
+    }
+    if (level>3) {
+        level = 3;
+    }
+}
+int Unit::getCost() const {
+    return cost;
+}
+int Unit::getHp() const {
+    return hp;
+}
+void Unit::setHp(int newHp) {
+    hp = newHp;
+}
+int Unit::getMaxHp() const {
+    return maxHp;
+}
+int Unit::getMana()const {
+    return mana;
+}
+int Unit::getMaxMana() const {
+    return maxMana;
+}
+int Unit::getAtt() const {
+    return att;
+}
+int Unit::getAttSpeed() const {
+    return attSpeed;
+}
+int Unit::getAttArea() const {
+    return attArea;
+}
+int Unit::getMoveSpeed()const {
+    return moveSpeed;
+}
+UnitState Unit::getState() const {
+    return state;
+}
+//装备
+void Unit::putOnEquipment(Equipment* equip) {
+    equipment = equip;
+    if (equip == nullptr ) {
+        hpBuff = 0;
+        attBuff = 0;
+        attSpeedBuff=0;
+        attAreaBuff=0;
+        moveSpeedBuff=0;
+        manaBuff=0;
+    }else {
+        hpBuff = equip->getHpBuff();
+        attBuff = equip->getAttBuff();
+        attSpeedBuff = equip->getAttSpeedBuff();
+        attAreaBuff = equip->getAttAreaBuff();
+        moveSpeedBuff = equip->getMoveSpeedBuff();
+        manaBuff = equip->getManaBuff();
+    }
 }
 
+Equipment* Unit::takeOffEquipment(bool hasCell) {
+    if (hasCell) {
+        Equipment* equip = equipment;
+        equipment = nullptr;
+        selfRefresh();
+        return equip;
+    }
+    return nullptr;
+}
 
+bool Unit::isWearingEquipment() {
+    if (equipment != nullptr) {
+        return true;
+    }
+    return false;
+}
 
+//buff change
+void Unit::changeHpBuff(int num) {
+    hpBuff+=num;
+    if (hpBuff<0) {
+        hpBuff = 0;
+    }
+}
 
+void Unit::changeAttBuff(int num) {
+    attBuff+=num;
+    if (attBuff<0) {
+        attBuff = 0;
+    }
+}
+
+void Unit::changeAttSpeedBuff(int num) {
+    attSpeedBuff+=num;
+    if (attSpeedBuff<0) {
+        attSpeedBuff = 0;
+    }
+}
+
+void Unit::changeAttAreaBuff(int num) {
+    attAreaBuff+=num;
+    if (attAreaBuff<0) {
+        attAreaBuff = 0;
+    }
+}
+void Unit::changeMoveSpeedBuff(int num) {
+    moveSpeedBuff+=num;
+    if (moveSpeedBuff<0) {
+        moveSpeedBuff = 0;
+    }
+}
+void Unit::changeManaBuff(int num) {
+    manaBuff+=num;
+    if (manaBuff<0) {
+        manaBuff = 0;
+    }
+}
+
+//combat
 void Unit::takeDamage(const int dmg){
     hp -= dmg;
     if (hp < 0) hp = 0;
 }
-
-void Unit::setX(int new_x) { x = new_x; }
-void Unit::setY(int new_y) { y = new_y; }
-
-void Unit::setHp(int new_hp) { hp = new_hp; }
-
-int Unit::getHp() const { return hp; }
-
-int Unit::getX() const { return x; }
-
-int Unit::getY() const { return y; }
-
-int Unit::getOwner() const { return owner; }
-
-int Unit::getMaxHp() const { return maxHp; }
-
-int Unit::getAtt() const { return att; }
-
-QString Unit::getImage()const{ return image;}
-
 void Unit::resetAction() {
     action.move="Null";
     action.attack="Null";
@@ -49,8 +165,8 @@ void Unit::resetAction() {
     action.targetY = -1;
 }
 
-int Unit::getCost() const {
-    return cost;
+void Unit::changeStateTo(UnitState newState) {
+    state = newState;
 }
 
 //辅助函数1：验证坐标合法
@@ -64,197 +180,168 @@ bool isPositionValid(int x,int y,int row,int col) {
 int turnPositive(int num) {
     return num>=0?num:-num;
 }
+//辅助函数3：曼哈顿距离
+int getDistance(const int x1,const int y1,const int x2,const int y2) {
+    return turnPositive(x1-x2)+turnPositive(y1-y2);
+}
 
+void Unit::searchEnemy(const std::vector<std::vector<Unit *>> &grid, int row, int col, int r, int c) {
+    //首先是索敌逻辑
+    bool isFind = false;
+    int area = 1;
+    while (!isFind && area < 16) {
+        for (int k = 0; k < area; k++) {
+            //按照曼哈顿距离，四向搜寻
+            //左-右下
+            if (isPositionValid(r+k,c-area+k,row,col)) {
+                if (grid[r+k][c-area+k]!=nullptr && grid[r+k][c-area+k]->getOwner()!=owner) {
+                    isFind=true;
+                    action.targetX = r+k;
+                    action.targetY = c-area+k;
+                    break;
+                }
+            }
+            //下-右上
+            if (isPositionValid(r+area-k,c+k,row,col)) {
+                if (grid[r+area-k][c+k]!=nullptr && grid[r+area-k][c+k]->getOwner()!=owner) {
+                    isFind=true;
+                    action.targetX = r+area-k;
+                    action.targetY = c+k;
+                    break;
+                }
+            }
+            //右-左上
+            if (isPositionValid(r-k,c+area-k,row,col)) {
+                if (grid[r-k][c+area-k]!=nullptr && grid[r-k][c+area-k]->getOwner()!=owner) {
+                    isFind=true;
+                    action.targetX = r-k;
+                    action.targetY = c+area-k;
+                    break;
+                }
+            }
+            //上-左下
+            if (isPositionValid(r-area+k,c-k,row,col)) {
+                if (grid[r-area+k][c-k]!=nullptr && grid[r-area+k][c-k]->getOwner()!=owner) {
+                    isFind=true;
+                    action.targetX = r-area+k;
+                    action.targetY = c-k;
+                    break;
+                }
+            }
+        }
+        area +=1 ;
+    }
+}
 
 void Unit::searchNewTarget(const std::vector<std::vector<Unit*>>& grid,const int row,const int col,const int r,const int c) {
-    //遍历四周四个格子，找到距离最近的空位，定为最终目标
-    std::cout<<"search MoveTarget"<<std::endl;
-    int enemyX = action.targetX;
-    int enemyY = action.targetY;
-    int newTargetX = -1;
-    int newTargetY = -1;
-    int newDistance = 0;
-    int minDistance = 100;
-    //左
-    newTargetX = enemyX;
-    newTargetY = enemyY-attArea;
-    if (isPositionValid(newTargetX,newTargetY,row,col)) {
-        if (grid[newTargetX][newTargetY]==nullptr) {
-            newDistance = turnPositive(newTargetX-r)+turnPositive(newTargetY-c);
-            if (newDistance<=minDistance) {
-                minDistance = newDistance;
-                action.targetX = newTargetX;
-                action.targetY = newTargetY;
+    //遍历四周，找到攻击范围内最近的空位，定为最终目标
+    int k = attArea;
+    int eX = action.targetX;
+    int eY = action.targetY;
+    int minDistance = 50;
+    while (k!=0) {
+        //进行四向遍历
+        for (int s = 0; s < k; s++) {
+            //左-右下
+            if (isPositionValid(eX+s,eY-k+s,row,col)) {
+                if (grid[eX+s][eY-k+s]==nullptr && getDistance(eX+s,eY-k+s,r,c)<=minDistance) {
+                    action.targetX = eX+s;
+                    action.targetY = eY-k+s;
+                    minDistance = getDistance(eX+s,eY-k+s,r,c);
+                }
+            }
+            //下-右上
+            if (isPositionValid(eX+k-s,eY+s,row,col)) {
+                if (grid[eX+k-s][eY+s]==nullptr && getDistance(eX+k-s,eY+s,r,c)<=minDistance) {
+                    action.targetX = eX+k-s;
+                    action.targetY = eY+s;
+                    minDistance = getDistance(eX+k-s,eY+s,r,c);
+                }
+            }
+            //右-左上
+            if (isPositionValid(eX-s,eY+k-s,row,col)) {
+                if (grid[eX-s][eY+k-s]==nullptr && getDistance(eX-s,eY+k-s,r,c)<=minDistance) {
+                    action.targetX = eX-s;
+                    action.targetY = eY+k-s;
+                    minDistance = getDistance(eX-s,eY+k-s,r,c);
+                }
+            }
+            //上-左下
+            if (isPositionValid(eX-k+s,eY-s,row,col)) {
+                if (grid[eX-k+s][eY-s]==nullptr && getDistance(eX-k+s,eY-s,r,c)<=minDistance) {
+                    action.targetX = eX-k+s;
+                    action.targetY = eY-s;
+                    minDistance = getDistance(eX-k+s,eY-s,r,c);
+                }
             }
         }
+        k-=1;
     }
-    //右
-    newTargetX = enemyX;
-    newTargetY = enemyY+attArea;
-    if (isPositionValid(newTargetX,newTargetY,row,col)) {
-        if (grid[newTargetX][newTargetY]==nullptr) {
-            newDistance = turnPositive(newTargetX-r)+turnPositive(newTargetY-c);
-            if (newDistance<=minDistance) {
-                minDistance = newDistance;
-                action.targetX = newTargetX;
-                action.targetY = newTargetY;
-            }
-        }
-    }
-    //上
-    newTargetX = enemyX-attArea;
-    newTargetY = enemyY;
-    if (isPositionValid(newTargetX,newTargetY,row,col)) {
-        if (grid[newTargetX][newTargetY]==nullptr) {
-            newDistance = turnPositive(newTargetX-r)+turnPositive(newTargetY-c);
-            if (newDistance<=minDistance) {
-                minDistance = newDistance;
-                action.targetX = newTargetX;
-                action.targetY = newTargetY;
-            }
-        }
-    }
-    //下
-    newTargetX = enemyX+attArea;
-    newTargetY = enemyY;
-    if (isPositionValid(newTargetX,newTargetY,row,col)) {
-        if (grid[newTargetX][newTargetY]==nullptr) {
-            newDistance = turnPositive(newTargetX-r)+turnPositive(newTargetY-c);
-            if (newDistance<=minDistance) {
-                minDistance = newDistance;
-                action.targetX = newTargetX;
-                action.targetY = newTargetY;
-            }
-        }
-    }
-
 }
 
 //寻路和攻击逻辑就在这里了
 Action Unit::march(const std::vector<std::vector<Unit*>>& grid,const int row,const int col,const int r,const int c) {
-
-    //首先是索敌逻辑
-    bool isFind = false;
-    int loop = 1;
-    int target_x = -1;
-    int target_y = -1;
-    while (!isFind && loop < 15) {
-        for (int k = 0; k <= loop; k++) {
-            //上
-            if (isPositionValid(r-loop,c-k,row,col)) {
-                if (grid[r-loop][c-k]!=nullptr&&grid[r-loop][c-k]->getOwner()!=owner) {
-                    isFind = true;
-                    target_x = r-loop;
-                    target_y = c-k;
-                    break;
-                }
-
-            }
-            if (isPositionValid(r-loop,c+k,row,col)) {
-                if (grid[r-loop][c+k]!=nullptr&&grid[r-loop][c+k]->getOwner()!=owner) {
-                    isFind = true;
-                    target_x = r-loop;
-                    target_y = c+k;
-                    break;
-                }
-            }
-            //下
-            if (isPositionValid(r+loop,c-k,row,col)) {
-                if (grid[r+loop][c-k]!=nullptr&&grid[r+loop][c-k]->getOwner()!=owner) {
-                    isFind = true;
-                    target_x = r+loop;
-                    target_y = c-k;
-                    break;
-                }
-            }
-            if (isPositionValid(r+loop,c+k,row,col)) {
-                if (grid[r+loop][c+k]!=nullptr&&grid[r+loop][c+k]->getOwner()!=owner) {
-                    isFind = true;
-                    target_x = r+loop;
-                    target_y = c+k;
-                    break;
-                }
-            }
-            //左
-            if (isPositionValid(r-k,c-loop,row,col)) {
-                if (grid[r-k][c-loop]!=nullptr&&grid[r-k][c-loop]->getOwner()!=owner) {
-                    isFind = true;
-                    target_x = r-k;
-                    target_y = c-loop;
-                    break;
-                }
-            }
-            if (isPositionValid(r+k,c-loop,row,col)) {
-                if (grid[r+k][c-loop]!=nullptr&&grid[r+k][c-loop]->getOwner()!=owner) {
-                    isFind = true;
-                    target_x = r+k;
-                    target_y = c-loop;
-                    break;
-                }
-            }
-            //右
-            if (isPositionValid(r+k,c+loop,row,col)) {
-                if (grid[r+k][c+loop]!=nullptr&&grid[r+k][c+loop]->getOwner()!=owner) {
-                    isFind = true;
-                    target_x = r+k;
-                    target_y = c+loop;
-                    break;
-                }
-            }
-            if (isPositionValid(r-k,c+loop,row,col)) {
-                if (grid[r-k][c+loop]!=nullptr&&grid[r-k][c+loop]->getOwner()!=owner) {
-                    isFind = true;
-                    target_x = r-k;
-                    target_y = c+loop;
-                    break;
-                }
-            }
-        }
-        loop +=1 ;
-    }
-    //确定最近敌人的位置：target_x,target_y
-    //先直接写到状态中
-    action.targetX = target_x;
-    action.targetY = target_y;
-
-    //下面进行战斗决策，移动还是攻击，根据距离判断
+    //索敌，确定target坐标
+    std::cout<<"search"<<std::endl;
+    searchEnemy(grid,row,col,r,c);
+    std::cout <<"getTarget"<<std::endl;
+    //下面进行战斗决策，移动还是攻击，根据距离，攻速，移速判断
     int distance = turnPositive(action.targetX-r)+turnPositive(action.targetY-c) ;
     if (distance<=attArea) {
-        //距离合适，返回攻击信号和攻击目标
-        action.attack = "CommonAtt";
-        return action;
+        //如果达到攻击条件，攻击（普攻或技能），在这里实现多态，CD清零；否则没有攻击行动，保持不动，CD自增
+        if (attCD==attSpeed) {
+            if (mana == maxMana) {
+                action.attack = "SkillAtt";
+                skillAttack(grid,row,col,r,c);
+                mana = 0;
+            }else {
+                action.attack = "CommonAtt";
+                grid[action.targetX][action.targetY]->takeDamage(att);
+                mana+=1;
+            }
+            attCD = 0;
+        }else {
+            action.attack = "Null";
+            attCD+=1;
+        }
     }
-
     else{
-        //距离太远，返回移动信号和移动方向
-        //注意选择移动的时候要注意，目标已经不是敌人本身了，应该是敌人四周的空位
-        searchNewTarget(grid,row,col,r,c);
-        //确定移动方向
-        int dx = action.targetX-r;
-        int dy = action.targetY-c;
-        int Dx = turnPositive(dx);
-        int Dy = turnPositive(dy);
-        //总共八种可能
-        //先确定直接的四个
-        if (dx==0) {
-            action.move = dy>0 ? "Right":"Left";
+        //满足移动条件则移动，否则不动
+        if (moveCD==moveSpeed) {
+            //注意选择移动的时候要注意，目标已经不是敌人本身了，应该是敌人四周的空位
+            searchNewTarget(grid,row,col,r,c);
+            //确定移动方向
+            int dx = action.targetX-r;
+            int dy = action.targetY-c;
+            int Dx = turnPositive(dx);
+            int Dy = turnPositive(dy);
+            //总共八种可能
+            //先确定直接的四个
+            if (dx==0) {
+                action.move = dy>0 ? "Right":"Left";
+            }
+            if (dy==0) {
+                action.move = dx>0 ? "Down":"Up";
+            }
+            //再确定复杂的四个
+            if (dx>0&&dy>0) {
+                action.move = Dx<=Dy?"Down":"Right";
+            }
+            if (dx<0&&dy>0) {
+                action.move = Dx<=Dy?"Up":"Right";
+            }
+            if (dx<0&&dy<0) {
+                action.move = Dx<=Dy?"Up":"Left";
+            }
+            if (dx>0&&dy<0) {
+                action.move = Dx<=Dy?"Down":"Left";
+            }
+            //行动完，CD清零
+            moveCD=0;
+        }else {
+            action.move = "Null";
+            moveCD+=1;
         }
-        if (dy==0) {
-            action.move = dx>0 ? "Down":"Up";
-        }
-        //再确定复杂的四个
-        if (dx>0&&dy>0) {
-            action.move = Dx<=Dy?"Down":"Right";
-        }
-        if (dx<0&&dy>0) {
-            action.move = Dx<=Dy?"Up":"Right";
-        }
-        if (dx<0&&dy<0) {
-            action.move = Dx<=Dy?"Up":"Left";
-        }
-        if (dx>0&&dy<0) {
-            action.move = Dx<=Dy?"Down":"Left";
-        }
-        return action;
     }
+    return action;
 }

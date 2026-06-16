@@ -6,6 +6,8 @@
 #include <iostream>
 #include <QMessageBox>
 
+#include "../entity/Equipment/Sword.h"
+
 // void sleepMs(int msec)
 // {
 //     QEventLoop loop;
@@ -19,28 +21,24 @@ GameManager::GameManager(const int r,const int c, const int pos) {
     comBoard = std::make_unique<ComBoard>(*preBoard);
     player = std::make_unique<Player>();
     shop = std::make_unique<Shop>();
+    equipment.resize(5,nullptr);
     currentState = GameState::Ready;
     currentLevel = GameLevel::ONE;
     result = ComResult::Draw;
     //初始化计时器，设置间隔和槽函数
-    timer.setInterval(300);
+    timer.setInterval(100);
     connect(&timer, &QTimer::timeout, this, &GameManager::handleCombat);
 }
-
-
-GameState GameManager::getCurrentState() const {
-    return currentState;
+//----------棋盘状态--------------//
+int GameManager::getRow() const {
+    return preBoard->getRow();
 }
-
-int GameManager::getRow() const { return preBoard->getRow(); }
-int GameManager::getCol() const { return preBoard->getCol(); }
-int GameManager::getBen() const { return preBoard->getBen(); }
-
-int GameManager::getPlayerMoney() const { return player->getMoney(); }
-void GameManager::changePlayerMoney(int num) {
-    player->changeMoney(num);
+int GameManager::getCol() const {
+    return preBoard->getCol();
 }
-
+int GameManager::getBen() const {
+    return preBoard->getBen();
+}
 Unit* GameManager::getUnitAtGrid(const int r,const int c) const {
     if (currentState==GameState::Combat) {
         return comBoard->getUnitAt(r,c);
@@ -48,56 +46,73 @@ Unit* GameManager::getUnitAtGrid(const int r,const int c) const {
         return preBoard->getUnitAt(r,c);
     }
 }
-
 Unit* GameManager::getUnitAtBench(const int pos) const {
     return preBoard->getUnitAt(pos);
 }
-
-Unit* GameManager::getUnitAtShop(const int s) const {
-    return shop->getUnitAt(s);
-}
-
 bool GameManager::isCellEmptyGrid(int r, int c) const {
     if (currentState==GameState::Combat) {
         return comBoard->isCellEmpty(r,c);
     }else {
         return preBoard->isCellEmpty(r,c);
     }
-
 }
-
-bool GameManager::isCellEmptyShop(const int s) const {
-    return shop->isCellEmpty(s);
-}
-
 bool GameManager::isCellEmptyBench(int pos) const {
     return preBoard->isCellEmpty(pos);
 }
-
-int GameManager::getPlayerShopRefreshTimes() const {
-    return player->getShopRefreshTimes();
-}
-
-void GameManager::levelUp() {
-    player->changeLevel(1);
-}
-
 void GameManager::removeUnitAtGrid(const int r,const int c) {
     preBoard->removeUnitAt(r,c);
 }
-
 void GameManager::removeUnitAtBench(const int pos) {
     preBoard->removeUnitAt(pos);
 }
+void GameManager::placeUnitAtGrid(const int r,const int c,Unit* unit) {
+    if (preBoard->isCellEmpty(r,c)) {
+        preBoard->placeUnitAt(r,c,unit);
+    }
+}
+void GameManager::placeUnitAtBench(const int pos,Unit* unit) {
+    if (preBoard->isCellEmpty(pos)) {
+        preBoard->placeUnitAt(pos,unit);
+    }
+}
 
+//装备库
+Equipment* GameManager::getEquipmentAt(int s) const{
+    if (s<0||s>=5){return nullptr;}
+    return equipment[s];
+}
+bool GameManager::isEquipmentEmpty(int s) const {
+    if (s>=0&&s<5&&equipment[s]==nullptr) {
+        return true;
+    }
+    return false;
+}
+
+void GameManager::placeEquipmentAt(int s, Equipment *equip) {
+    if (s>=0&&s<5) {
+        equipment[s] = equip;
+    }
+}
+
+void GameManager::removeEquipmentAt(int s) {
+    if (s>=0&&s<5) {
+        equipment[s] = nullptr;
+    }
+}
+
+//-------------Shop-------------//
+Unit* GameManager::getUnitAtShop(const int s) const {
+    return shop->getUnitAt(s);
+}
+bool GameManager::isCellEmptyShop(const int s) const {
+    return shop->isCellEmpty(s);
+}
 void GameManager::removeUnitAtShop(int s) {
     shop->removeUnitAt(s);
 }
-
 void GameManager::placeUnitAtShop(int s, Unit *unit) {
     shop->placeUnitAt(s,unit);
 }
-
 void GameManager::refreshShop() {
     //先重置
     for (int t=0;t<5;++t) {
@@ -113,34 +128,105 @@ void GameManager::refreshShop() {
     }
 }
 
+void GameManager::autoMergeToBench(const int k) {
+    bool isEnd= false;
+    while (!isEnd) {
+        //首先遍历备战区，然后遍历棋盘，统计到三个之后自动合并
+        int count = 0;
+        Position arr[2];
+        Unit* unit = getUnitAtBench(k);
+        bool isReady = false;
+
+        for (int p=0;p<preBoard->getBen();++p) {
+            Unit* item = getUnitAtBench(p);
+            if (item!=nullptr&&item->getOwner()==0&&item!=unit) {
+                if (item->getName()==unit->getName()&&item->getLevel()==unit->getLevel()&&unit->getLevel()!=3) {
+                    Position pos;
+                    pos.x = p;
+                    pos.y = -1;
+                    arr[count] = pos;
+                    count++;
+                    if (count==2) {
+                        isReady=true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        //下面来遍历我方半场，寻找合并者
+        if (!isReady) {
+            for (int r=preBoard->getRow()/2;r<preBoard->getRow();++r) {
+                for (int c = 0;c<preBoard->getCol();++c) {
+                    Unit* item = getUnitAtGrid(r,c);
+                    if (item!=nullptr&&item->getOwner()==0&&item!=unit) {
+                        if (item->getName()==unit->getName()&&item->getLevel()==unit->getLevel()&&unit->getLevel()!=3) {
+                            Position pos;
+                            pos.x = r;
+                            pos.y = c;
+                            arr[count] = pos;
+                            count++;
+                            if (count==2) {
+                                isReady=true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (isReady) {break;}
+            }
+        }
+
+        //当可以自动合并时
+        if (isReady) {
+            for (int s = 0;s<2;++s) {
+                if (arr[s].y ==-1) {
+                    removeUnitAtBench(arr[s].x);
+                }else {
+                    removeUnitAtGrid(arr[s].x,arr[s].y);
+                }
+            }
+            unit->changeLevel(+1);
+            unit->selfRefresh();
+        }
+        isEnd = !isReady;
+    }
+
+}
+
+//------------Player--------------//
+int GameManager::getPlayerScore() const {
+    return player->getScore();
+}
+int GameManager::getPlayerLevel() const {
+    return player->getLevel();
+}
+Player* GameManager::getPlayer() const {
+    return player.get();
+}
+int GameManager::getPlayerMoney() const {
+    return player->getMoney();
+}
+void GameManager::changePlayerMoney(int num) {
+    player->changeMoney(num);
+}
+int GameManager::getPlayerShopRefreshTimes() const {
+    return player->getShopRefreshTimes();
+}
+void GameManager::levelUp() {
+    player->changeLevel(1);
+}
+int GameManager::getMaxUnit() const {
+    return player->getMaxUnits();
+}
 void GameManager::changeShopRefreshTimes(const int num) {
     player->changeShopRefreshTimes(num);
 }
 
-void GameManager::placeUnitAtGrid(const int r,const int c,Unit* unit) {
-    if (preBoard->isCellEmpty(r,c)) {
-        preBoard->placeUnitAt(r,c,unit);
-    }
+//-------------游戏流程--------------//
+GameState GameManager::getCurrentState() const {
+    return currentState;
 }
-
-void GameManager::placeUnitAtBench(const int pos,Unit* unit) {
-    if (preBoard->isCellEmpty(pos)) {
-        preBoard->placeUnitAt(pos,unit);
-    }
-}
-
-int GameManager::getPlayerScore() const {
-    return player->getScore();
-}
-
-int GameManager::getPlayerLevel() const {
-    return player->getLevel();
-}
-
-Player* GameManager::getPlayer() const {
-    return player.get();
-}
-
 int GameManager::selfUnitCount()const {
     int count = 0;
     for (int r=preBoard->getRow()/2;r<preBoard->getRow();++r) {
@@ -152,11 +238,6 @@ int GameManager::selfUnitCount()const {
     }
     return count;
 }
-
-int GameManager::getMaxUnit() const {
-    return player->getMaxUnits();
-}
-
 void GameManager::setEnemy() {
     switch (currentLevel) {
         case GameLevel::ONE:
@@ -165,7 +246,6 @@ void GameManager::setEnemy() {
             break;
         case GameLevel::TWO:
             clearEnemyGrid();
-            placeUnitAtGrid(2,1,new Knight(1));
             placeUnitAtGrid(2,3,new Knight(1));
             placeUnitAtGrid(2,2,new Knight(1));
             break;
@@ -182,7 +262,6 @@ void GameManager::setEnemy() {
             break;
     }
 }
-
 void GameManager::setEnemyRandomly() {
     for (int r=0;r<preBoard->getRow()/2;++r) {
         for (int c=0;c<preBoard->getCol();++c) {
@@ -207,15 +286,19 @@ void GameManager::goToNextLevel() {
         switch (currentLevel) {
             case GameLevel::ONE:
                 currentLevel = GameLevel::TWO;
+                std::cout<<"NEXT LEVEL"<<std::endl;
                 break;
             case GameLevel::TWO:
                 currentLevel = GameLevel::THREE;
+                std::cout<<"NEXT LEVEL"<<std::endl;
                 break;
             case GameLevel::THREE:
                 currentLevel = GameLevel::FOUR;
+                std::cout<<"NEXT LEVEL"<<std::endl;
                 break;
             case GameLevel::FOUR:
                 currentLevel = GameLevel::FOUR;
+                std::cout<<"NEXT LEVEL"<<std::endl;
                 break;
         }
     }
@@ -246,7 +329,6 @@ void GameManager::resetTheGame() {
     player->reset();
 }
 
-//---------------------
 void GameManager::changeStateTo(GameState newGameState) {
     currentState = newGameState;
     switch (currentState) {
@@ -286,19 +368,41 @@ void GameManager::timerStop() {
     timer.stop();
 }
 
+//--------------
+
 void GameManager::handleReady() {
     timer.stop();
 }
 
 void GameManager::handlePrepare() {
     timer.stop();
-    preBoard->rePrepare();
+    //刷新所有内容
+    for (int r =0;r<preBoard->getRow();++r) {
+        for (int c=0;c<preBoard->getCol();++c) {
+            Unit* unit = preBoard->getUnitAt(r,c);
+            if (unit) {
+                //先处理装备的事情
+                if (unit->isWearingEquipment()) {
+                    bool hasCell = false;
+                    for (int k = 0;k<5;k++) {
+                        if (isEquipmentEmpty(k)) {
+                            hasCell = true;
+                            Equipment* equip = unit->takeOffEquipment(hasCell);
+                            placeEquipmentAt(k,equip);
+                        }
+                    }
+                }
+                //下面脱过装备之后刷新
+                unit->selfRefresh();
+            }
+        }
+    }
     setEnemy();
     emit shouldUpdate();
 }
 
 void GameManager::handleCombat() {
-    std::cout<<"clock arrive"<<std::endl;
+    std::cout<<"-------------clock arrive--------------"<<std::endl;
     //每一轮行动所有棋子之后都要考虑战斗有没有结束
     comBoard->marchEveryUnit();
     if (isComEnd()) {
@@ -313,15 +417,15 @@ void GameManager::handleCombat() {
 void GameManager::handleResolve() {
     switch (result) {
         case ComResult::Success:
-            player->changeMoney(15);
+            player->changeMoney(20);
             player->changeScore(10);
             break;
         case ComResult::Failure:
-            player->changeMoney(5);
+            player->changeMoney(10);
             player->changeHp(-20);
             break;
         case ComResult::Draw:
-            player->changeMoney(10);
+            player->changeMoney(15);
             player->changeHp(-10);
             player->changeScore(5);
             break;

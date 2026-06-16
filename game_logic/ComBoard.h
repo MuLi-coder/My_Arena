@@ -14,7 +14,6 @@
 class ComBoard {
     int row;
     int col;
-
     std::vector<std::vector<Unit*>> grid;
 
 public:

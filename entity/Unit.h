@@ -7,6 +7,8 @@
 #include <QString>
 #include <random>
 
+#include "Equipment.h"
+
 static int randomNum() {
     std::random_device rd;
     // 2. 初始化梅森旋转算法引擎
@@ -30,45 +32,86 @@ struct Action {
 //move:  "Null","Up","Down","Left","Right"
 //attack:"Null","CommonAtt","SkillAtt"
 
+enum class UnitState {
+    Idle,
+    Done,
+    Moving,
+    Attacking
+};
+
 class Unit {
 protected:
-
-    int x, y, pos;      //坐标
-    int hp;             //生命值
-    int maxHp;          //最大生命值
-    int owner;          //所属
+    QString name;
+    QString trait;
     QString image;
-    int att;
-    int attArea;
+    int owner;  //
+    int level;  //
+
+    //固定属性，受等级和buff控制
     int cost;
-    Action action;
+    int maxHp;
+    int maxMana;
+    int att;
+    int attSpeed;
+    int moveSpeed;
+    int attArea;
+    //主动装备及 buff 加成     //
+    Equipment* equipment;
+    int hpBuff;
+    int attBuff;
+    int attSpeedBuff;
+    int attAreaBuff;
+    int moveSpeedBuff;
+    int manaBuff;
+    //动态属性，战斗中不断变化
+    int hp;
+    int mana;
+    int moveCD;
+    int attCD;
+    UnitState state;    //
+    Action action;      //
 
 public:
-    Unit(int owner = 0);
+    Unit(int owner = 0,int level = 1);
     virtual ~Unit() = default;
-
-
-
-    // virtual void attack(Unit* target) = 0;
-    void takeDamage(int dmg);
-    void setX(int new_x);
-    void setY(int new_y);
-    void setHp(int new_hp);
-    void resetAction();
-    // 获取状态: 名字，生命,横纵坐标，图片路径
-
-
-    int getHp()const;
-    int getX() const;
-    int getY() const;
-    int getOwner() const;
-    int getMaxHp() const;
-    int getAtt() const;
-    int getCost()const;
+    //参数的获取和更改
+    QString getName()const;
+    QString getTrait()const;
     QString getImage()const;
-
+    int getOwner() const;
+    int getLevel()const;
+    void changeLevel(int num);
+    int getCost()const;
+    int getHp()const;
+    void setHp(int newHp);
+    int getMaxHp() const;
+    int getMana()const;
+    int getMaxMana()const;
+    int getAtt() const;
+    int getAttSpeed()const;
+    int getAttArea()const;
+    int getMoveSpeed()const;
+    UnitState getState()const;
+    //数据自更新
+    virtual void selfRefresh() = 0;
+    //穿装备
+    void putOnEquipment(Equipment* equip);
+    Equipment* takeOffEquipment(bool hasCell);
+    bool isWearingEquipment();
+    //change Buff
+    void changeHpBuff(int num);
+    void changeAttBuff(int num);
+    void changeAttSpeedBuff(int num);
+    void changeAttAreaBuff(int num);
+    void changeMoveSpeedBuff(int num);
+    void changeManaBuff(int num);
     //combat
+    void takeDamage(int dmg);
+    void resetAction();
+    void changeStateTo(UnitState newState);
     void searchNewTarget(const std::vector<std::vector<Unit*>>& grid,int row,int col,int r,int c);
+    void searchEnemy(const std::vector<std::vector<Unit*>>& grid,int row,int col,int r,int c);
+    virtual void skillAttack(const std::vector<std::vector<Unit*>>& grid,int row,int col,int r,int c) = 0;
     Action march(const std::vector<std::vector<Unit*>>& grid,int row,int col,int r,int c);
 
 };

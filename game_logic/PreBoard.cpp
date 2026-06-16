@@ -77,8 +77,6 @@ bool PreBoard::isCellEmpty(const int pos) const {
 void PreBoard::placeUnitAt(const int r, const int c, Unit* hero) {
     if (this->isCellEmpty(r, c)) {
         grid[r][c] = hero ;
-        hero->setX(r);
-        hero->setY(c);
     }
 }
 
@@ -100,15 +98,3 @@ void PreBoard::removeUnitAt(int pos) {
     }
 }
 
-
-void PreBoard::rePrepare() {
-    //重置血量等等参数
-    for (int r = 0; r < row; r++) {
-        for (int c = 0; c < col; c++) {
-            if (!this->isCellEmpty(r,c)) {
-                Unit* unit = this->getUnitAt(r,c);
-                unit->setHp(unit->getMaxHp());
-            }
-        }
-    }
-}

@@ -5,6 +5,9 @@
 #ifndef MY_ARENA_PLAYER_H
 #define MY_ARENA_PLAYER_H
 
+#include <vector>
+
+#include "../entity/Equipment.h"
 
 class Player {
     int refreshTimes;

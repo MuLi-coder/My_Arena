@@ -11,9 +11,12 @@
 
 
 class Knight : public Unit{
-    int armor;
 public:
-    Knight(int owner = 0);
+    Knight(int owner = 0,int level = 1);
+
+
+    void selfRefresh() override;
+    void skillAttack(const std::vector<std::vector<Unit *>> &grid, int row, int col, int r, int c) override;
 };
 
 

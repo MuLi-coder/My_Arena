@@ -11,7 +11,7 @@
 #include "EquipWidget.h"
 #include "../game_logic/GameManager.h"
 
-#include "../entity/Equipment/Sword.h"
+
 //这个类我们专门用来显示GUI界面，同时负责向逻辑层的GameManager类传递信息
 class GameWindow : public QMainWindow {
     Q_OBJECT

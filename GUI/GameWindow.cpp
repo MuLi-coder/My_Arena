@@ -2,6 +2,10 @@
 #include <QGridLayout>
 #include <QVBoxLayout>
 #include <QMessageBox>
+#include "../entity/Equipment/Sword.h"
+#include "../entity/Equipment/BlueCrystal.h"
+#include "../entity/Equipment/ChainMail.h"
+#include "../entity/Equipment/RapidGloves.h"
 
 GameWindow::GameWindow(QWidget *parent)
     : QMainWindow(parent) {
@@ -23,7 +27,10 @@ GameWindow::GameWindow(QWidget *parent)
     dragHero = nullptr;
 
     //测试装备
-    gameManager->placeEquipmentAt(2,new Sword());
+    gameManager->placeEquipmentAt(2,new Sword);
+    gameManager->placeEquipmentAt(1,new BlueCrystal);
+    gameManager->placeEquipmentAt(3,new RapidGloves);
+    gameManager->placeEquipmentAt(0,new ChainMail);
     //--------------------------下面剩下的就是画图的部分的初始化-----------------------------//
 
     // 1. 设置窗口基础属性
@@ -431,7 +438,7 @@ void GameWindow::mouseReleaseEvent(QMouseEvent *event) {
         bool isFind = false;
         for (int r = gameManager->getRow()-1; r >= gameManager->getRow()/2; --r) {
             for (int c = 0; c < gameManager->getCol(); ++c) {
-                if (gridWidgets[r][c] == releaseWidget && !gameManager->isCellEmptyGrid(r,c)) {
+                if (gridWidgets[r][c] == releaseWidget && !gameManager->isCellEmptyGrid(r,c)&& !gameManager->getUnitAtGrid(r,c)->isWearingEquipment()) {
                     gameManager->getUnitAtGrid(r,c)->putOnEquipment(dragEquipment);
                     gameManager->getUnitAtGrid(r,c)->selfRefresh();
                     gameManager->removeEquipmentAt(dragFromEquip);
@@ -444,7 +451,7 @@ void GameWindow::mouseReleaseEvent(QMouseEvent *event) {
         //如果是bench，遍历备战区
         if (!isFind) {
             for (int k = 0; k < gameManager->getBen(); ++k) {
-                if (benchWidgets[k] == releaseWidget && !gameManager->isCellEmptyBench(k)) {
+                if (benchWidgets[k] == releaseWidget && !gameManager->isCellEmptyBench(k) && !gameManager->getUnitAtBench(k)->isWearingEquipment()) {
                     gameManager->getUnitAtBench(k)->putOnEquipment(dragEquipment);
                     gameManager->getUnitAtBench(k)->selfRefresh();
                     gameManager->removeEquipmentAt(dragFromEquip);

@@ -8,6 +8,7 @@
 Knight::Knight(int owner,int level)
     :Unit(owner,level) {
     name="Knight";
+    trait = "Warrior";
     image = "../images/Knight.png";
     cost = 4;
     maxHp = 100;
@@ -28,12 +29,12 @@ void Knight::selfRefresh() {
     //备战状态根据等级和buff对属性进行重置
     putOnEquipment(equipment);
     cost  = 4+(level-1)*5;
-    maxHp = 100+(level-1)*20 + hpBuff;
-    maxMana = 5 - (level-1) - manaBuff >= 1 ?  5 - (level-1) - manaBuff:1;
-    att = 8+(level-1)*5 + attBuff;
-    attSpeed = 5 - (level-1) - attSpeedBuff >= 1 ? 5 - (level-1) - attSpeedBuff : 1;
-    attArea = 1 + attAreaBuff;
-    moveSpeed = 5 - (level-1) - moveSpeedBuff >= 1 ? 5 - (level-1) - moveSpeedBuff : 1;
+    maxHp = 100+(level-1)*20 + equipHpBuff + traitHpBuff;
+    maxMana = 5 - (level-1) - equipManaBuff - traitManaBuff >= 1 ?  5 - (level-1) - equipManaBuff - traitManaBuff:1;
+    att = 8+(level-1)*5 + equipAttBuff + traitAttBuff;
+    attSpeed = 5 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff >= 1 ? 5 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff : 1;
+    attArea = 1 + equipAttAreaBuff + traitAttAreaBuff;
+    moveSpeed = 5 - (level-1) - equipMoveSpeedBuff - traitMoveSpeedBuff >= 1 ? 5 - (level-1) - equipMoveSpeedBuff - traitMoveSpeedBuff : 1;
     //动态属性重置
     hp = maxHp;
     mana = maxMana;

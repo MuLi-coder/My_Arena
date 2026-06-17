@@ -8,6 +8,7 @@
 Mage::Mage(int owner,int level)
     :Unit(owner,level) {
     name="Mage";
+    trait = "Mage";
     image = "../images/Mage.png";
     cost = 6;
     maxHp = 70;
@@ -27,12 +28,12 @@ Mage::Mage(int owner,int level)
 void Mage::selfRefresh() {
     putOnEquipment(equipment);
     cost = 6 + (level-1)*8;
-    maxHp = 70 + (level-1)*10 + hpBuff;
-    maxMana = 5 - (level-1) - manaBuff >=1 ? 5 - (level-1) - manaBuff : 1;
-    att= 15 + (level-1)*8 + attBuff;
-    attSpeed = 7 - (level-1) - attSpeedBuff >=1 ? 7 - (level-1) - attSpeedBuff : 1;
-    attArea = 2 + attAreaBuff;
-    moveSpeed = 5-(level-1)-moveSpeedBuff>=1 ? 5-(level-1)-moveSpeedBuff : 1;
+    maxHp = 70 + (level-1)*10 + equipHpBuff + traitHpBuff;
+    maxMana = 5 - (level-1) - equipManaBuff - traitManaBuff >=1 ? 5 - (level-1) - equipManaBuff - traitManaBuff : 1;
+    att= 15 + (level-1)*8 + equipAttBuff + traitAttBuff;
+    attSpeed = 7 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff >=1 ? 7 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff : 1;
+    attArea = 2 + equipAttAreaBuff + traitAttAreaBuff;
+    moveSpeed = 5-(level-1)-equipMoveSpeedBuff-traitMoveSpeedBuff>=1 ? 5-(level-1)-equipMoveSpeedBuff-traitMoveSpeedBuff : 1;
     //动态属性重置
     hp = maxHp;
     mana = maxMana;

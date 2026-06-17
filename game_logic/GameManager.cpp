@@ -362,6 +362,55 @@ void GameManager::resetTheGame() {
     player->reset();
 }
 
+void GameManager::applyTraitBuffs() {
+    //统计我方场上各职业数量
+    int warriorCount = 0;  // 战士：Knight + Guardian
+    int mageCount = 0;     // 法师：Mage + Warlock
+    int assassinCount = 0; // 刺客：Assassin + Archer
+
+    for (int r = 0; r < preBoard->getRow(); ++r) {
+        for (int c = 0; c < preBoard->getCol(); ++c) {
+            Unit* unit = preBoard->getUnitAt(r,c);
+            if (unit != nullptr && unit->getOwner() == 0) {
+                QString name = unit->getName();
+                if (name == "Knight" || name == "Guardian") {
+                    warriorCount++;
+                } else if (name == "Mage" || name == "Warlock") {
+                    mageCount++;
+                } else if (name == "Assassin" || name == "Archer") {
+                    assassinCount++;
+                }
+            }
+        }
+    }
+
+    //计算羁绊buff值
+    //战士：2人触发，全体+15攻击
+    int tHp=0, tAtt=0, tAttSpd=0, tAttArea=0, tMoveSpd=0, tMana=0;
+    if (warriorCount >= 2) {
+        tAtt += 15;
+    }
+    //法师：2人触发，全体攻速CD-1
+    if (mageCount >= 2) {
+        tAttSpd += 1;
+    }
+    //刺客：2人触发，全体移速CD-1
+    if (assassinCount >= 2) {
+        tMoveSpd += 1;
+    }
+
+    //先清除旧的羁绊buff，再应用到所有我方棋子
+    for (int r = 0; r < preBoard->getRow(); ++r) {
+        for (int c = 0; c < preBoard->getCol(); ++c) {
+            Unit* unit = preBoard->getUnitAt(r,c);
+            if (unit != nullptr && unit->getOwner() == 0) {
+                unit->applyTraitBuffs(tHp, tAtt, tAttSpd, tAttArea, tMoveSpd, tMana);
+                unit->selfRefresh();
+            }
+        }
+    }
+}
+
 void GameManager::changeStateTo(GameState newGameState) {
     currentState = newGameState;
     switch (currentState) {
@@ -373,6 +422,7 @@ void GameManager::changeStateTo(GameState newGameState) {
             break;
         case GameState::Combat:
             comBoard->setComBoard(*preBoard);
+            applyTraitBuffs();
             timer.start();
             //战斗前检验战斗能否开始
             if (selfUnitCount()==0) {
@@ -425,7 +475,8 @@ void GameManager::handlePrepare() {
                         }
                     }
                 }
-                //下面脱过装备之后刷新
+                //下面脱过装备之后清除羁绊buff再刷新
+                unit->clearTraitBuffs();
                 unit->selfRefresh();
             }
         }

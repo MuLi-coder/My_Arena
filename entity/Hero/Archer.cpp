@@ -7,6 +7,7 @@
 Archer::Archer(int owner, int level)
     :Unit(owner, level) {
     name = "Archer";
+    trait = "Assassin";
     image = "../images/Archer.png";
     cost = 3;
     maxHp = 65;
@@ -25,12 +26,12 @@ Archer::Archer(int owner, int level)
 void Archer::selfRefresh() {
     putOnEquipment(equipment);
     cost = 3 + (level-1)*4;
-    maxHp = 65 + (level-1)*10 + hpBuff;
-    maxMana = 4 - (level-1) - manaBuff >=1 ? 4 - (level-1) - manaBuff : 1;
-    att = 15 + (level-1)*6 + attBuff;
-    attSpeed = 4 - (level-1) - attSpeedBuff >=1 ? 4 - (level-1) - attSpeedBuff : 1;
-    attArea = 3 + attAreaBuff;
-    moveSpeed = 4 - (level-1) - moveSpeedBuff >=1 ? 4 - (level-1) - moveSpeedBuff : 1;
+    maxHp = 65 + (level-1)*10 + equipHpBuff + traitHpBuff;
+    maxMana = 4 - (level-1) - equipManaBuff - traitManaBuff >=1 ? 4 - (level-1) - equipManaBuff - traitManaBuff : 1;
+    att = 15 + (level-1)*6 + equipAttBuff + traitAttBuff;
+    attSpeed = 4 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff >=1 ? 4 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff : 1;
+    attArea = 3 + equipAttAreaBuff + traitAttAreaBuff;
+    moveSpeed = 4 - (level-1) - equipMoveSpeedBuff - traitMoveSpeedBuff >=1 ? 4 - (level-1) - equipMoveSpeedBuff - traitMoveSpeedBuff : 1;
     //动态属性重置
     hp = maxHp;
     mana = maxMana;

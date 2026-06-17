@@ -57,12 +57,19 @@ protected:
     int attArea;
     //主动装备及 buff 加成     //
     Equipment* equipment;
-    int hpBuff;
-    int attBuff;
-    int attSpeedBuff;
-    int attAreaBuff;
-    int moveSpeedBuff;
-    int manaBuff;
+    int equipHpBuff;
+    int equipAttBuff;
+    int equipAttSpeedBuff;
+    int equipAttAreaBuff;
+    int equipMoveSpeedBuff;
+    int equipManaBuff;
+    //羁绊 buff 加成
+    int traitHpBuff;
+    int traitAttBuff;
+    int traitAttSpeedBuff;
+    int traitAttAreaBuff;
+    int traitMoveSpeedBuff;
+    int traitManaBuff;
     //动态属性，战斗中不断变化
     int hp;
     int mana;
@@ -105,6 +112,9 @@ public:
     void changeAttAreaBuff(int num);
     void changeMoveSpeedBuff(int num);
     void changeManaBuff(int num);
+    //羁绊 buff
+    void applyTraitBuffs(int hp, int att, int attSpd, int attArea, int moveSpd, int mana);
+    void clearTraitBuffs();
     //combat
     void takeDamage(int dmg);
     void resetAction();

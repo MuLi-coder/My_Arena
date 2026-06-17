@@ -73,6 +73,8 @@ class GameManager : public QObject{
     void handlePrepare();
     void handleCombat();
     void handleResolve();
+    //羁绊系统
+    void applyTraitBuffs();
 
 public:
     GameManager(int r=8, int c=8,int pos=8);

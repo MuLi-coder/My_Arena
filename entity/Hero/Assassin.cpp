@@ -7,6 +7,7 @@
 Assassin::Assassin(int owner, int level)
     :Unit(owner, level) {
     name = "Assassin";
+    trait = "Assassin";
     image = "../images/Assassin.png";
     cost = 5;
     maxHp = 60;
@@ -25,12 +26,12 @@ Assassin::Assassin(int owner, int level)
 void Assassin::selfRefresh() {
     putOnEquipment(equipment);
     cost = 5 + (level-1)*7;
-    maxHp = 60 + (level-1)*10 + hpBuff;
-    maxMana = 3 - (level-1) - manaBuff >=1 ? 3 - (level-1) - manaBuff : 1;
-    att = 18 + (level-1)*8 + attBuff;
-    attSpeed = 3 - (level-1) - attSpeedBuff >=1 ? 3 - (level-1) - attSpeedBuff : 1;
-    attArea = 1 + attAreaBuff;
-    moveSpeed = 3 - (level-1) - moveSpeedBuff >=1 ? 3 - (level-1) - moveSpeedBuff : 1;
+    maxHp = 60 + (level-1)*10 + equipHpBuff + traitHpBuff;
+    maxMana = 3 - (level-1) - equipManaBuff - traitManaBuff >=1 ? 3 - (level-1) - equipManaBuff - traitManaBuff : 1;
+    att = 18 + (level-1)*8 + equipAttBuff + traitAttBuff;
+    attSpeed = 3 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff >=1 ? 3 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff : 1;
+    attArea = 1 + equipAttAreaBuff + traitAttAreaBuff;
+    moveSpeed = 3 - (level-1) - equipMoveSpeedBuff - traitMoveSpeedBuff >=1 ? 3 - (level-1) - equipMoveSpeedBuff - traitMoveSpeedBuff : 1;
     //动态属性重置
     hp = maxHp;
     mana = maxMana;

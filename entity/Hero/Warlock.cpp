@@ -7,6 +7,7 @@
 Warlock::Warlock(int owner, int level)
     :Unit(owner, level) {
     name = "Warlock";
+    trait = "Mage";
     image = "../images/Warlock.png";
     cost = 4;
     maxHp = 80;
@@ -25,12 +26,12 @@ Warlock::Warlock(int owner, int level)
 void Warlock::selfRefresh() {
     putOnEquipment(equipment);
     cost = 4 + (level-1)*5;
-    maxHp = 80 + (level-1)*15 + hpBuff;
-    maxMana = 4 - (level-1) - manaBuff >=1 ? 4 - (level-1) - manaBuff : 1;
-    att = 12 + (level-1)*5 + attBuff;
-    attSpeed = 5 - (level-1) - attSpeedBuff >=1 ? 5 - (level-1) - attSpeedBuff : 1;
-    attArea = 2 + attAreaBuff;
-    moveSpeed = 5 - (level-1) - moveSpeedBuff >=1 ? 5 - (level-1) - moveSpeedBuff : 1;
+    maxHp = 80 + (level-1)*15 + equipHpBuff + traitHpBuff;
+    maxMana = 4 - (level-1) - equipManaBuff - traitManaBuff >=1 ? 4 - (level-1) - equipManaBuff - traitManaBuff : 1;
+    att = 12 + (level-1)*5 + equipAttBuff + traitAttBuff;
+    attSpeed = 5 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff >=1 ? 5 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff : 1;
+    attArea = 2 + equipAttAreaBuff + traitAttAreaBuff;
+    moveSpeed = 5 - (level-1) - equipMoveSpeedBuff - traitMoveSpeedBuff >=1 ? 5 - (level-1) - equipMoveSpeedBuff - traitMoveSpeedBuff : 1;
     //动态属性重置
     hp = maxHp;
     mana = maxMana;

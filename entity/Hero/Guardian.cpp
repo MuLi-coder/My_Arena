@@ -7,6 +7,7 @@
 Guardian::Guardian(int owner, int level)
     :Unit(owner, level) {
     name = "Guardian";
+    trait = "Warrior";
     image = "../images/Guardian.png";
     cost = 5;
     maxHp = 130;
@@ -25,12 +26,12 @@ Guardian::Guardian(int owner, int level)
 void Guardian::selfRefresh() {
     putOnEquipment(equipment);
     cost = 5 + (level-1)*6;
-    maxHp = 130 + (level-1)*30 + hpBuff;
-    maxMana = 6 - (level-1) - manaBuff >=1 ? 6 - (level-1) - manaBuff : 1;
-    att = 6 + (level-1)*3 + attBuff;
-    attSpeed = 6 - (level-1) - attSpeedBuff >=1 ? 6 - (level-1) - attSpeedBuff : 1;
-    attArea = 1 + attAreaBuff;
-    moveSpeed = 6 - (level-1) - moveSpeedBuff >=1 ? 6 - (level-1) - moveSpeedBuff : 1;
+    maxHp = 130 + (level-1)*30 + equipHpBuff + traitHpBuff;
+    maxMana = 6 - (level-1) - equipManaBuff - traitManaBuff >=1 ? 6 - (level-1) - equipManaBuff - traitManaBuff : 1;
+    att = 6 + (level-1)*3 + equipAttBuff + traitAttBuff;
+    attSpeed = 6 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff >=1 ? 6 - (level-1) - equipAttSpeedBuff - traitAttSpeedBuff : 1;
+    attArea = 1 + equipAttAreaBuff + traitAttAreaBuff;
+    moveSpeed = 6 - (level-1) - equipMoveSpeedBuff - traitMoveSpeedBuff >=1 ? 6 - (level-1) - equipMoveSpeedBuff - traitMoveSpeedBuff : 1;
     //动态属性重置
     hp = maxHp;
     mana = maxMana;

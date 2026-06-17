@@ -11,12 +11,19 @@ Unit::Unit(const int owner,const int level)
     state = UnitState::Idle;
     //装备buff初始化
     equipment = nullptr;
-    hpBuff = 0;
-    attBuff = 0;
-    attSpeedBuff = 0;
-    attAreaBuff = 0;
-    moveSpeedBuff = 0;
-    manaBuff = 0;
+    equipHpBuff = 0;
+    equipAttBuff = 0;
+    equipAttSpeedBuff = 0;
+    equipAttAreaBuff = 0;
+    equipMoveSpeedBuff = 0;
+    equipManaBuff = 0;
+    //羁绊buff初始化
+    traitHpBuff = 0;
+    traitAttBuff = 0;
+    traitAttSpeedBuff = 0;
+    traitAttAreaBuff = 0;
+    traitMoveSpeedBuff = 0;
+    traitManaBuff = 0;
 }
 QString Unit::getName()const {
     return name;
@@ -79,19 +86,19 @@ UnitState Unit::getState() const {
 void Unit::putOnEquipment(Equipment* equip) {
     equipment = equip;
     if (equip == nullptr ) {
-        hpBuff = 0;
-        attBuff = 0;
-        attSpeedBuff=0;
-        attAreaBuff=0;
-        moveSpeedBuff=0;
-        manaBuff=0;
+        equipHpBuff = 0;
+        equipAttBuff = 0;
+        equipAttSpeedBuff=0;
+        equipAttAreaBuff=0;
+        equipMoveSpeedBuff=0;
+        equipManaBuff=0;
     }else {
-        hpBuff = equip->getHpBuff();
-        attBuff = equip->getAttBuff();
-        attSpeedBuff = equip->getAttSpeedBuff();
-        attAreaBuff = equip->getAttAreaBuff();
-        moveSpeedBuff = equip->getMoveSpeedBuff();
-        manaBuff = equip->getManaBuff();
+        equipHpBuff = equip->getHpBuff();
+        equipAttBuff = equip->getAttBuff();
+        equipAttSpeedBuff = equip->getAttSpeedBuff();
+        equipAttAreaBuff = equip->getAttAreaBuff();
+        equipMoveSpeedBuff = equip->getMoveSpeedBuff();
+        equipManaBuff = equip->getManaBuff();
     }
 }
 
@@ -114,43 +121,62 @@ bool Unit::isWearingEquipment() {
 
 //buff change
 void Unit::changeHpBuff(int num) {
-    hpBuff+=num;
-    if (hpBuff<0) {
-        hpBuff = 0;
+    equipHpBuff+=num;
+    if (equipHpBuff<0) {
+        equipHpBuff = 0;
     }
 }
 
 void Unit::changeAttBuff(int num) {
-    attBuff+=num;
-    if (attBuff<0) {
-        attBuff = 0;
+    equipAttBuff+=num;
+    if (equipAttBuff<0) {
+        equipAttBuff = 0;
     }
 }
 
 void Unit::changeAttSpeedBuff(int num) {
-    attSpeedBuff+=num;
-    if (attSpeedBuff<0) {
-        attSpeedBuff = 0;
+    equipAttSpeedBuff+=num;
+    if (equipAttSpeedBuff<0) {
+        equipAttSpeedBuff = 0;
     }
 }
 
 void Unit::changeAttAreaBuff(int num) {
-    attAreaBuff+=num;
-    if (attAreaBuff<0) {
-        attAreaBuff = 0;
+    equipAttAreaBuff+=num;
+    if (equipAttAreaBuff<0) {
+        equipAttAreaBuff = 0;
     }
 }
 void Unit::changeMoveSpeedBuff(int num) {
-    moveSpeedBuff+=num;
-    if (moveSpeedBuff<0) {
-        moveSpeedBuff = 0;
+    equipMoveSpeedBuff+=num;
+    if (equipMoveSpeedBuff<0) {
+        equipMoveSpeedBuff = 0;
     }
 }
 void Unit::changeManaBuff(int num) {
-    manaBuff+=num;
-    if (manaBuff<0) {
-        manaBuff = 0;
+    equipManaBuff+=num;
+    if (equipManaBuff<0) {
+        equipManaBuff = 0;
     }
+}
+
+//羁绊 buff
+void Unit::applyTraitBuffs(int hp, int att, int attSpd, int attArea, int moveSpd, int mana) {
+    traitHpBuff = hp;
+    traitAttBuff = att;
+    traitAttSpeedBuff = attSpd;
+    traitAttAreaBuff = attArea;
+    traitMoveSpeedBuff = moveSpd;
+    traitManaBuff = mana;
+}
+
+void Unit::clearTraitBuffs() {
+    traitHpBuff = 0;
+    traitAttBuff = 0;
+    traitAttSpeedBuff = 0;
+    traitAttAreaBuff = 0;
+    traitMoveSpeedBuff = 0;
+    traitManaBuff = 0;
 }
 
 //combat

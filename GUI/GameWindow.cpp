@@ -26,11 +26,6 @@ GameWindow::GameWindow(QWidget *parent)
     shopHero = nullptr;
     dragHero = nullptr;
 
-    //测试装备
-    gameManager->placeEquipmentAt(2,new Sword);
-    gameManager->placeEquipmentAt(1,new BlueCrystal);
-    gameManager->placeEquipmentAt(3,new RapidGloves);
-    gameManager->placeEquipmentAt(0,new ChainMail);
     //--------------------------下面剩下的就是画图的部分的初始化-----------------------------//
 
     // 1. 设置窗口基础属性
@@ -349,9 +344,68 @@ GameWindow::GameWindow(QWidget *parent)
 }
 
 
-// 鼠标按下事件：负责“选中”棋子
+// 鼠标按下事件：负责”选中”棋子
 void GameWindow::mousePressEvent(QMouseEvent *event) {
-    if (event->button() == Qt::LeftButton && gameManager->getCurrentState()==GameState::Prepare) {
+    //右键脱下装备
+    if (event->button() == Qt::RightButton && gameManager->getCurrentState()==GameState::Prepare) {
+        QWidget *clickedWidget = childAt(event->pos());
+        if (!clickedWidget) return;
+
+        Unit* targetUnit = nullptr;
+
+        //检查是否点击了我方棋盘上的棋子
+        for (int r = gameManager->getRow()/2; r < gameManager->getRow(); ++r) {
+            for (int c = 0; c < gameManager->getCol(); ++c) {
+                if (gridWidgets[r][c] == clickedWidget && !gameManager->isCellEmptyGrid(r,c) && gameManager->getUnitAtGrid(r,c)->getOwner()==0) {
+                    targetUnit = gameManager->getUnitAtGrid(r,c);
+                    break;
+                }
+            }
+            if (targetUnit) break;
+        }
+
+        //检查是否点击了备战区的棋子
+        if (!targetUnit) {
+            for (int k = 0; k < gameManager->getBen(); ++k) {
+                if (benchWidgets[k] == clickedWidget && !gameManager->isCellEmptyBench(k) && gameManager->getUnitAtBench(k)->getOwner()==0) {
+                    targetUnit = gameManager->getUnitAtBench(k);
+                    break;
+                }
+            }
+        }
+
+        //如果找到了有装备的棋子，弹窗询问是否脱下
+        if (targetUnit && targetUnit->isWearingEquipment()) {
+            int ret = QMessageBox::question(
+                this,
+                "脱下装备",
+                QString("确定要脱下 %1 的装备吗？").arg(targetUnit->getName()),
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::No
+            );
+
+            if (ret == QMessageBox::Yes) {
+                //检查装备区是否有空位
+                bool hasEmptySlot = false;
+                for (int k = 0; k < 5; ++k) {
+                    if (gameManager->isEquipmentEmpty(k)) {
+                        hasEmptySlot = true;
+                        Equipment* equip = targetUnit->takeOffEquipment(true);
+                        gameManager->placeEquipmentAt(k, equip);
+                        targetUnit->selfRefresh();
+                        QMessageBox::information(this, "成功", "装备已脱下");
+                        break;
+                    }
+                }
+                if (!hasEmptySlot) {
+                    QMessageBox::information(this, "失败", "装备区已满，无法脱下装备");
+                }
+            }
+            updateBoardUI();
+        }
+    }
+    //左键选中棋子
+    else if (event->button() == Qt::LeftButton && gameManager->getCurrentState()==GameState::Prepare) {
         // 获取鼠标点击位置的子控件
         QWidget *clickedWidget = childAt(event->pos());
         if (!clickedWidget) return;

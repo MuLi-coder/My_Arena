@@ -16,6 +16,10 @@
 
 #include "../entity/Hero/Knight.h"
 #include "../entity/Hero/Mage.h"
+#include "../entity/Hero/Archer.h"
+#include "../entity/Hero/Guardian.h"
+#include "../entity/Hero/Assassin.h"
+#include "../entity/Hero/Warlock.h"
 
 enum class GameLevel {
     ONE,

@@ -7,6 +7,9 @@
 #include <QMessageBox>
 
 #include "../entity/Equipment/Sword.h"
+#include "../entity/Equipment/ChainMail.h"
+#include "../entity/Equipment/RapidGloves.h"
+#include "../entity/Equipment/BlueCrystal.h"
 
 // void sleepMs(int msec)
 // {
@@ -120,10 +123,18 @@ void GameManager::refreshShop() {
     }
     for (int t=0;t<5;++t) {
         int ratio = randomNum();
-        if (ratio<50) {
+        if (ratio<=16) {
             placeUnitAtShop(t,new Knight());
-        }else {
+        }else if (ratio<=33) {
             placeUnitAtShop(t,new Mage());
+        }else if (ratio<=50) {
+            placeUnitAtShop(t,new Archer());
+        }else if (ratio<=66) {
+            placeUnitAtShop(t,new Guardian());
+        }else if (ratio<=83) {
+            placeUnitAtShop(t,new Assassin());
+        }else {
+            placeUnitAtShop(t,new Warlock());
         }
     }
 }
@@ -174,6 +185,28 @@ void GameManager::autoMergeToBench(const int k) {
                     }
                 }
                 if (isReady) {break;}
+            }
+        }
+
+        //合并前处理装备：被合并的棋子如果有装备，退回到装备区
+        if (isReady) {
+            for (int s = 0; s < 2; ++s) {
+                Unit* mergeUnit = nullptr;
+                if (arr[s].y == -1) {
+                    mergeUnit = getUnitAtBench(arr[s].x);
+                } else {
+                    mergeUnit = getUnitAtGrid(arr[s].x, arr[s].y);
+                }
+                if (mergeUnit != nullptr && mergeUnit->isWearingEquipment()) {
+                    //找装备区空位
+                    for (int k = 0; k < 5; ++k) {
+                        if (isEquipmentEmpty(k)) {
+                            Equipment* equip = mergeUnit->takeOffEquipment(true);
+                            placeEquipmentAt(k, equip);
+                            break;
+                        }
+                    }
+                }
             }
         }
 
@@ -431,6 +464,34 @@ void GameManager::handleResolve() {
             break;
     }
     emit enterResolve(result,player->getHp());
+
+    //随机获得装备：20%概率，四种装备等可能，装备区满则不添加
+    int equipRoll = randomNum();
+    if (equipRoll <= 40) {
+        int equipType = randomNum();
+        Equipment* newEquip = nullptr;
+        if (equipType <= 25) {
+            newEquip = new Sword();
+        } else if (equipType <= 50) {
+            newEquip = new ChainMail();
+        } else if (equipType <= 75) {
+            newEquip = new RapidGloves();
+        } else {
+            newEquip = new BlueCrystal();
+        }
+        //找第一个空位放入
+        for (int k = 0; k < 5; ++k) {
+            if (isEquipmentEmpty(k)) {
+                placeEquipmentAt(k, newEquip);
+                break;
+            }
+            //如果到最后一个还没空位，丢弃这件装备
+            if (k == 4) {
+                delete newEquip;
+            }
+        }
+    }
+
     if (player->getHp()>0) {
         player->changeShopRefreshTimes(+5);
         refreshShop();

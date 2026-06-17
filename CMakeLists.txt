@@ -46,6 +46,15 @@ add_executable(my_Arena
         entity/Equipment/RapidGloves.h
         entity/Equipment/ChainMail.h
         entity/Equipment/BlueCrystal.h
+        entity/Hero/Guardian.h
+        entity/Hero/Guardian.cpp
+        entity/Hero/Assassin.h
+        entity/Hero/Assassin.cpp
+        entity/Hero/Archer.h
+        entity/Hero/Archer.cpp
+        entity/Hero/Warlock.h
+        entity/Hero/Warlock.cpp
+
 )
 
 # 4. 把 Qt 的库链接到我们的程序上

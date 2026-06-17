@@ -49,8 +49,10 @@ void Mage::selfRefresh() {
 void Mage::skillAttack(const std::vector<std::vector<Unit *> > &grid, int row, int col, int r, int c) {
     for (int x = action.targetX-1; x <= action.targetX+1; ++x) {
         for (int y = action.targetY-1; y <= action.targetY+1; ++y) {
-            if (grid[x][y]!=nullptr && grid[x][y]->getOwner()!=owner) {
-                grid[x][y]->takeDamage(att*1.2);
+            if (x >= 0 && x < row && y >= 0 && y < col) {
+                if (grid[x][y]!=nullptr && grid[x][y]->getOwner()!=owner) {
+                    grid[x][y]->takeDamage(att*1.2);
+                }
             }
         }
     }

@@ -2,6 +2,7 @@
 #include <QGridLayout>
 #include <QVBoxLayout>
 #include <QMessageBox>
+#include <QFileDialog>
 #include "../entity/Equipment/Sword.h"
 #include "../entity/Equipment/BlueCrystal.h"
 #include "../entity/Equipment/ChainMail.h"
@@ -133,6 +134,8 @@ GameWindow::GameWindow(QWidget *parent)
     controlButtonPart->setStyleSheet("border:1px solid gray;background:white");
     controlButtonPart->setFixedSize(CELL_SIZE*gameManager->getBen(), CELL_SIZE+8);
     QHBoxLayout* controlButtonLayout = new QHBoxLayout(controlButtonPart);
+    controlButtonLayout->setContentsMargins(0, 0, 0, 0);
+    controlButtonLayout->setSpacing(2);
 
     //升级按钮
     QPushButton* levelUpButton = new QPushButton("LevelUp(5)", controlButtonPart);
@@ -211,12 +214,56 @@ GameWindow::GameWindow(QWidget *parent)
         }
     });
 
-    //将四个按钮添加到水平布局中
+    //第五个存档按钮
+    QPushButton* saveButton = new QPushButton("Save", controlButtonPart);
+    saveButton->setFixedSize(70, 40);
+    saveButton->setStyleSheet("color:white; border: 1px solid gray; background: #4a90d9;");
+    connect(saveButton, &QPushButton::clicked, this, [=]() {
+        if (gameManager->getCurrentState()==GameState::Prepare) {
+            int ret = QMessageBox::question(
+                this,
+                "存档",
+                "确定要保存当前游戏进度吗？",
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::No
+            );
+            if (ret == QMessageBox::Yes) {
+                QString path = QFileDialog::getSaveFileName(this, "选择存档位置", "", "存档文件 (*.sav)");
+                if (!path.isEmpty()) {
+                    gameManager->saveGame(path);
+                    QMessageBox::information(this, "成功", "游戏已保存");
+                }
+            }
+        } else {
+            QMessageBox::information(this, "提示", "只能在准备阶段存档");
+        }
+    });
+
+    //第六个读档按钮
+    QPushButton* loadButton = new QPushButton("Load", controlButtonPart);
+    loadButton->setFixedSize(70, 40);
+    loadButton->setStyleSheet("color:white; border: 1px solid gray; background: #7b68ee;");
+    connect(loadButton, &QPushButton::clicked, this, [=]() {
+        if (gameManager->getCurrentState()==GameState::Ready || gameManager->getCurrentState()==GameState::Prepare) {
+            QString path = QFileDialog::getOpenFileName(this, "选择存档文件", "", "存档文件 (*.sav)");
+            if (!path.isEmpty()) {
+                gameManager->loadGame(path);
+                QMessageBox::information(this, "成功", "存档已加载");
+                updateBoardUI();
+            }
+        } else {
+            QMessageBox::information(this, "提示", "只能在准备阶段或游戏未开始时读档");
+        }
+    });
+
+    //将六个按钮添加到水平布局中
     controlButtonLayout->addWidget(levelUpButton);
     controlButtonLayout->addWidget(prepareButton);
     controlButtonLayout->addWidget(combatButton);
     controlButtonLayout->addWidget(pauseButton);
     controlButtonLayout->addWidget(startButton);
+    controlButtonLayout->addWidget(saveButton);
+    controlButtonLayout->addWidget(loadButton);
     controlButtonLayout->setAlignment(Qt::AlignCenter);
     //将水平布局添加到窗口布局中
     rightVLayout->addWidget(controlButtonPart,1,Qt::AlignCenter);

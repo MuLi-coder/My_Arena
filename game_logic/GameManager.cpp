@@ -5,6 +5,7 @@
 #include "GameManager.h"
 #include <iostream>
 #include <QMessageBox>
+#include <QFile>
 
 #include "../entity/Equipment/Sword.h"
 #include "../entity/Equipment/ChainMail.h"
@@ -588,5 +589,223 @@ bool GameManager::isComEnd(){
         return true;
     }
     return false;
+}
+
+//-------------存档系统--------------//
+
+//辅助：根据名字创建英雄
+static Unit* createUnitByName(const QString& name, int owner, int level) {
+    Unit* unit = nullptr;
+    if (name == "Knight") unit = new Knight(owner, level);
+    else if (name == "Mage") unit = new Mage(owner, level);
+    else if (name == "Archer") unit = new Archer(owner, level);
+    else if (name == "Guardian") unit = new Guardian(owner, level);
+    else if (name == "Assassin") unit = new Assassin(owner, level);
+    else if (name == "Warlock") unit = new Warlock(owner, level);
+    return unit;
+}
+
+//辅助：根据名字创建装备
+static Equipment* createEquipByName(const QString& name) {
+    if (name == "Sword") return new Sword();
+    if (name == "ChainMail") return new ChainMail();
+    if (name == "RapidGloves") return new RapidGloves();
+    if (name == "BlueCrystal") return new BlueCrystal();
+    return nullptr;
+}
+
+//辅助：保存一个棋子
+static void saveUnit(QDataStream& out, Unit* unit) {
+    if (unit == nullptr) {
+        out << false;
+    } else {
+        out << true;
+        out << unit->getName() << unit->getOwner() << unit->getLevel();
+        if (unit->isWearingEquipment()) {
+            out << unit->takeOffEquipment(true)->getName();
+            //注意：takeOff会触发selfRefresh，需要重新穿上
+            //所以改用另一个方式：直接通过isWearingEquipment判断后手动获取
+        } else {
+            out << QString("None");
+        }
+    }
+}
+
+void GameManager::saveGame(const QString& path) {
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly)) {
+        std::cout << "存档失败：无法打开文件" << std::endl;
+        return;
+    }
+    QDataStream out(&file);
+
+    //保存关卡进度
+    int levelInt = static_cast<int>(currentLevel);
+    out << levelInt;
+
+    //保存Player
+    player->saveTo(out);
+
+    //保存棋盘 grid
+    int row = preBoard->getRow();
+    int col = preBoard->getCol();
+    out << row << col;
+    for (int r = 0; r < row; ++r) {
+        for (int c = 0; c < col; ++c) {
+            Unit* unit = preBoard->getUnitAt(r, c);
+            if (unit == nullptr) {
+                out << false;
+            } else {
+                out << true;
+                out << unit->getName() << unit->getOwner() << unit->getLevel();
+                //装备：不能takeOff（会修改数据），用getTrait暂存装备名
+                //这里简单处理，写装备名或"None"
+                if (unit->isWearingEquipment()) {
+                    //临时脱下记录名字再穿回去
+                    Equipment* eq = unit->takeOffEquipment(true);
+                    QString eqName = eq->getName();
+                    unit->putOnEquipment(eq);
+                    out << eqName;
+                } else {
+                    out << QString("None");
+                }
+            }
+        }
+    }
+
+    //保存备战区 bench
+    int ben = preBoard->getBen();
+    out << ben;
+    for (int k = 0; k < ben; ++k) {
+        Unit* unit = preBoard->getUnitAt(k);
+        if (unit == nullptr) {
+            out << false;
+        } else {
+            out << true;
+            out << unit->getName() << unit->getOwner() << unit->getLevel();
+            if (unit->isWearingEquipment()) {
+                Equipment* eq = unit->takeOffEquipment(true);
+                QString eqName = eq->getName();
+                unit->putOnEquipment(eq);
+                out << eqName;
+            } else {
+                out << QString("None");
+            }
+        }
+    }
+
+    //保存商店
+    for (int s = 0; s < 5; ++s) {
+        Unit* unit = shop->getUnitAt(s);
+        if (unit == nullptr) {
+            out << false;
+        } else {
+            out << true;
+            out << unit->getName() << unit->getOwner() << unit->getLevel();
+            out << QString("None");
+        }
+    }
+
+    //保存装备库
+    for (int s = 0; s < 5; ++s) {
+        Equipment* eq = equipment[s];
+        if (eq == nullptr) {
+            out << QString("None");
+        } else {
+            out << eq->getName();
+        }
+    }
+
+    file.close();
+    std::cout << "存档成功" << std::endl;
+}
+
+void GameManager::loadGame(const QString& path) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        std::cout << "fail" << std::endl;
+        return;
+    }
+    QDataStream in(&file);
+
+    //先清空当前状态
+    resetTheGame();
+
+    //读取关卡进度
+    int levelInt;
+    in >> levelInt;
+    currentLevel = static_cast<GameLevel>(levelInt);
+
+    //读取Player
+    player->loadFrom(in);
+
+    //读取棋盘 grid
+    int row, col;
+    in >> row >> col;
+    for (int r = 0; r < row; ++r) {
+        for (int c = 0; c < col; ++c) {
+            bool hasUnit;
+            in >> hasUnit;
+            if (hasUnit) {
+                QString name;
+                int owner, level;
+                QString eqName;
+                in >> name >> owner >> level >> eqName;
+                Unit* unit = createUnitByName(name, owner, level);
+                if (unit && eqName != "None") {
+                    unit->putOnEquipment(createEquipByName(eqName));
+                }
+                preBoard->placeUnitAt(r, c, unit);
+            }
+        }
+    }
+
+    //读取备战区 bench
+    int ben;
+    in >> ben;
+    for (int k = 0; k < ben; ++k) {
+        bool hasUnit;
+        in >> hasUnit;
+        if (hasUnit) {
+            QString name;
+            int owner, level;
+            QString eqName;
+            in >> name >> owner >> level >> eqName;
+            Unit* unit = createUnitByName(name, owner, level);
+            if (unit && eqName != "None") {
+                unit->putOnEquipment(createEquipByName(eqName));
+            }
+            preBoard->placeUnitAt(k, unit);
+        }
+    }
+
+    //读取商店
+    for (int s = 0; s < 5; ++s) {
+        bool hasUnit;
+        in >> hasUnit;
+        if (hasUnit) {
+            QString name;
+            int owner, level;
+            QString eqName;
+            in >> name >> owner >> level >> eqName;
+            Unit* unit = createUnitByName(name, owner, level);
+            shop->placeUnitAt(s, unit);
+        }
+    }
+
+    //读取装备库
+    for (int s = 0; s < 5; ++s) {
+        QString eqName;
+        in >> eqName;
+        if (eqName != "None") {
+            equipment[s] = createEquipByName(eqName);
+        }
+    }
+
+    file.close();
+    //切换到准备状态
+    currentState = GameState::Prepare;
+    emit shouldUpdate();
+    std::cout << "success" << std::endl;
 }
 

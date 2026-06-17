@@ -65,3 +65,11 @@ void Player::changeMoney(const int num) {
         money = 0;
     }
 }
+
+void Player::saveTo(QDataStream& out) const {
+    out << money << hp << level << maxUnits << score << refreshTimes;
+}
+
+void Player::loadFrom(QDataStream& in) {
+    in >> money >> hp >> level >> maxUnits >> score >> refreshTimes;
+}

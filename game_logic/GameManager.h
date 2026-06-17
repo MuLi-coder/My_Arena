@@ -131,6 +131,9 @@ public:
 
     Player* getPlayer() const;
 
+    //存档系统
+    void saveGame(const QString& path);
+    void loadGame(const QString& path);
 
     //向外发送的信号参数
     signals:

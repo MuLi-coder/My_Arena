@@ -6,6 +6,7 @@
 #define MY_ARENA_PLAYER_H
 
 #include <vector>
+#include <QDataStream>
 
 #include "../entity/Equipment.h"
 
@@ -31,6 +32,9 @@ public:
     void changeHp(int num);
     void changeMoney(int num);
     void reset();
+    //存档
+    void saveTo(QDataStream& out) const;
+    void loadFrom(QDataStream& in);
 };
 
 

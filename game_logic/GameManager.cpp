@@ -296,20 +296,68 @@ void GameManager::setEnemy() {
             break;
     }
 }
+//辅助：创建一个随机敌方英雄，等级根据难度浮动
+static Unit* createRandomEnemy(int difficulty) {
+    //随机选择英雄类型（6种等概率）
+    int heroRoll = randomNum();
+    Unit* unit = nullptr;
+    if (heroRoll <= 16) {
+        unit = new Knight(1);
+    } else if (heroRoll <= 33) {
+        unit = new Mage(1);
+    } else if (heroRoll <= 50) {
+        unit = new Archer(1);
+    } else if (heroRoll <= 66) {
+        unit = new Guardian(1);
+    } else if (heroRoll <= 83) {
+        unit = new Assassin(1);
+    } else {
+        unit = new Warlock(1);
+    }
+
+    //根据难度决定等级
+    int levelRoll = randomNum();
+    int targetLevel = 1;
+    if (difficulty <= 20) {
+        //低难度：90% 1级，10% 2级
+        if (levelRoll > 90) targetLevel = 2;
+    } else if (difficulty <= 50) {
+        //中难度：50% 1级，40% 2级，10% 3级
+        if (levelRoll > 90) targetLevel = 3;
+        else if (levelRoll > 50) targetLevel = 2;
+    } else {
+        //高难度：20% 1级，50% 2级，30% 3级
+        if (levelRoll > 70) targetLevel = 3;
+        else if (levelRoll > 20) targetLevel = 2;
+    }
+
+    //升到目标等级
+    if (unit) {
+        unit->changeLevel(targetLevel - 1);
+        unit->selfRefresh();
+    }
+    return unit;
+}
+
 void GameManager::setEnemyRandomly() {
-    for (int r=0;r<preBoard->getRow()/2;++r) {
-        for (int c=0;c<preBoard->getCol();++c) {
-            int ratio = randomNum();
-            if (ratio<80) {
-                removeUnitAtGrid(r,c);
-            }
-            else if (ratio<90) {
-                removeUnitAtGrid(r,c);
-                placeUnitAtGrid(r,c,new Knight(1));
-            }
-            else {
-                removeUnitAtGrid(r,c);
-                placeUnitAtGrid(r,c,new Mage(1));
+    int score = player->getScore();
+
+    //根据积分决定生成概率（每格生成敌人的概率）
+    int spawnChance;
+    if (score <= 20) {
+        spawnChance = 30;     //低难度：30%概率生成
+    } else if (score <= 50) {
+        spawnChance = 40;     //中难度：40%概率生成
+    } else {
+        spawnChance = 55;     //高难度：55%概率生成
+    }
+
+    for (int r = 0; r < preBoard->getRow()/2; ++r) {
+        for (int c = 0; c < preBoard->getCol(); ++c) {
+            removeUnitAtGrid(r, c);
+            int roll = randomNum();
+            if (roll <= spawnChance) {
+                placeUnitAtGrid(r, c, createRandomEnemy(score));
             }
         }
     }

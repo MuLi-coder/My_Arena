@@ -44,7 +44,7 @@ protected:
     QString image;
     int owner;  //
     int level;  //
-
+    bool traitFlag;
     //固定属性，受等级和buff控制
     int cost;
     int maxHp;
@@ -112,6 +112,7 @@ public:
     void changeMoveSpeedBuff(int num);
     void changeManaBuff(int num);
     //羁绊 buff
+    void setTraitFlag(bool flag);
     void applyTraitBuffs(int hp, int att, int attSpd, int attArea, int moveSpd, int mana);
     void clearTraitBuffs();
     //combat

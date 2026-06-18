@@ -8,6 +8,7 @@
 #include "../Unit.h"
 
 class Assassin : public Unit{
+
 public:
     Assassin(int owner=0, int level=1);
 

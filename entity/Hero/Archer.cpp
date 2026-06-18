@@ -43,6 +43,8 @@ void Archer::selfRefresh() {
     action.attack = "Null";
     action.targetX = -1;
     action.targetY = -1;
+    //羁绊标志重置
+    traitFlag = false;
 }
 
 //技能：穿刺箭，对目标造成1.8倍伤害，同时穿透到目标身后的一个敌人

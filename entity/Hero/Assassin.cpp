@@ -43,6 +43,8 @@ void Assassin::selfRefresh() {
     action.attack = "Null";
     action.targetX = -1;
     action.targetY = -1;
+    //
+    traitFlag = false;
 }
 
 //技能：暗影突袭，对目标造成2.5倍暴击伤害，50%概率闪避本次反击（通过回复等量伤害模拟）

@@ -43,6 +43,8 @@ void Guardian::selfRefresh() {
     action.attack = "Null";
     action.targetX = -1;
     action.targetY = -1;
+    //
+    traitFlag = false;
 }
 
 //技能：守护之盾，对目标造成少量伤害，同时回复自身30%最大生命值

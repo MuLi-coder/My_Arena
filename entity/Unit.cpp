@@ -9,6 +9,7 @@ Unit::Unit(const int owner,const int level)
     action.targetX = -1;
     action.targetY = -1;
     state = UnitState::Idle;
+    traitFlag = false;
     //装备buff初始化
     equipment = nullptr;
     equipHpBuff = 0;
@@ -183,6 +184,10 @@ void Unit::clearTraitBuffs() {
     traitManaBuff = 0;
 }
 
+void Unit::setTraitFlag(bool flag) {
+    traitFlag = flag;
+}
+
 //combat
 void Unit::takeDamage(const int dmg){
     hp -= dmg;
@@ -326,7 +331,16 @@ Action Unit::march(const std::vector<std::vector<Unit*>>& grid,const int row,con
                 mana = 0;
             }else {
                 action.attack = "CommonAtt";
-                grid[action.targetX][action.targetY]->takeDamage(att);
+                std::cout  <<traitFlag << std::endl;
+                if (traitFlag==true) {
+                    int num = randomNum();
+                    if (num<50) {
+                        grid[action.targetX][action.targetY]->takeDamage(att*2);
+                        std::cout<<"double hit"<<std::endl;
+                    }
+                }else {
+                    grid[action.targetX][action.targetY]->takeDamage(att);
+                }
                 mana+=1;
             }
             attCD = 0;

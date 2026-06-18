@@ -46,6 +46,8 @@ void Knight::selfRefresh() {
     action.attack="Null";
     action.targetX=-1;
     action.targetY=-1;
+    //羁绊标志
+    traitFlag = false;
 }
 
 void Knight::skillAttack(const std::vector<std::vector<Unit *> > &grid, int row, int col, int r, int c) {

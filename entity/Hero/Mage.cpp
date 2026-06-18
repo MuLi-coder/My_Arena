@@ -45,6 +45,8 @@ void Mage::selfRefresh() {
     action.attack="Null";
     action.targetX = -1;
     action.targetY = -1;
+    //
+    traitFlag = false;
 }
 
 void Mage::skillAttack(const std::vector<std::vector<Unit *> > &grid, int row, int col, int r, int c) {

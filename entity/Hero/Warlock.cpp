@@ -43,6 +43,8 @@ void Warlock::selfRefresh() {
     action.attack = "Null";
     action.targetX = -1;
     action.targetY = -1;
+    //羁绊标志重置
+    traitFlag = false;
 }
 
 //技能：生命汲取，对目标造成1.5倍伤害，并将伤害的50%转化为自身生命回复

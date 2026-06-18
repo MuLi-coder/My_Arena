@@ -449,10 +449,6 @@ void GameManager::applyTraitBuffs() {
     if (mageCount >= 2) {
         tAttSpd += 1;
     }
-    //刺客：2人触发，全体移速CD-1
-    if (assassinCount >= 2) {
-        tMoveSpd += 1;
-    }
 
     //先清除旧的羁绊buff，再应用到所有我方棋子
     for (int r = 0; r < preBoard->getRow(); ++r) {
@@ -461,6 +457,21 @@ void GameManager::applyTraitBuffs() {
             if (unit != nullptr && unit->getOwner() == 0) {
                 unit->applyTraitBuffs(tHp, tAtt, tAttSpd, tAttArea, tMoveSpd, tMana);
                 unit->selfRefresh();
+            }
+        }
+    }
+    //机制类buff
+    //刺客：2人触发，连击
+    if (assassinCount >= 2) {
+        for (int r = 0; r < preBoard->getRow(); ++r) {
+            for (int c = 0; c < preBoard->getCol(); ++c) {
+                Unit* unit = preBoard->getUnitAt(r,c);
+                if (unit != nullptr && unit->getOwner() == 0) {
+                    QString name = unit->getName();
+                    if (name == "Assassin" || name == "Archer") {
+                        unit->setTraitFlag(true);
+                    }
+                }
             }
         }
     }

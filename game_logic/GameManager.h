@@ -64,7 +64,7 @@ class GameManager : public QObject{
     std::unique_ptr<Player> player;
     //拥有商店数据
     std::unique_ptr<Shop> shop;
-    //拥有武器库
+    //拥有装备库
     std::vector<Equipment*> equipment;
 
 
@@ -73,7 +73,7 @@ class GameManager : public QObject{
     void handlePrepare();
     void handleCombat();
     void handleResolve();
-    //羁绊系统
+    //羁绊检测
     void applyTraitBuffs();
 
 public:
@@ -117,7 +117,6 @@ public:
     void refreshShop();
     void autoMergeToBench(int k);
 
-
     //PLAYER
     int getPlayerMoney() const;
     int getPlayerLevel() const;
@@ -127,8 +126,6 @@ public:
     void changePlayerMoney(int num);
     int getPlayerScore() const;
     void changeShopRefreshTimes(int num);
-
-
     Player* getPlayer() const;
 
     //存档系统

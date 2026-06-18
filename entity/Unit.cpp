@@ -119,6 +119,10 @@ bool Unit::isWearingEquipment() {
     return false;
 }
 
+Equipment *Unit::getWearingEquipment() const {
+    return equipment;
+}
+
 //buff change
 void Unit::changeHpBuff(int num) {
     equipHpBuff+=num;

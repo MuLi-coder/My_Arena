@@ -318,13 +318,13 @@ static Unit* createRandomEnemy(int difficulty) {
     //根据难度决定等级
     int levelRoll = randomNum();
     int targetLevel = 1;
-    if (difficulty <= 20) {
+    if (difficulty == 1) {
         //低难度：90% 1级，10% 2级
         if (levelRoll > 90) targetLevel = 2;
-    } else if (difficulty <= 50) {
-        //中难度：50% 1级，40% 2级，10% 3级
-        if (levelRoll > 90) targetLevel = 3;
-        else if (levelRoll > 50) targetLevel = 2;
+    } else if (difficulty ==2) {
+        //中难度：55% 1级，40% 2级，5% 3级
+        if (levelRoll > 95) targetLevel = 3;
+        else if (levelRoll > 55) targetLevel = 2;
     } else {
         //高难度：20% 1级，50% 2级，30% 3级
         if (levelRoll > 70) targetLevel = 3;
@@ -343,21 +343,27 @@ void GameManager::setEnemyRandomly() {
     int score = player->getScore();
 
     //根据积分决定生成概率（每格生成敌人的概率）
-    int spawnChance;
-    if (score <= 20) {
-        spawnChance = 30;     //低难度：30%概率生成
-    } else if (score <= 50) {
-        spawnChance = 40;     //中难度：40%概率生成
+    int difficulty;
+    if (score <= 70) {
+        difficulty = 1;
+    } else if (score <= 140) {
+        difficulty = 2;
     } else {
-        spawnChance = 55;     //高难度：55%概率生成
+        difficulty = 3;
     }
 
     for (int r = 0; r < preBoard->getRow()/2; ++r) {
         for (int c = 0; c < preBoard->getCol(); ++c) {
             removeUnitAtGrid(r, c);
-            int roll = randomNum();
-            if (roll <= spawnChance) {
-                placeUnitAtGrid(r, c, createRandomEnemy(score));
+            int prob = randomNum();
+            if (difficulty == 1 && prob < 20) {
+                placeUnitAtGrid(r, c, createRandomEnemy(difficulty));
+            }
+            else if (difficulty == 2 && prob < 30) {
+                placeUnitAtGrid(r,c,createRandomEnemy(difficulty));
+            }
+            else if(difficulty == 3 && prob < 40) {
+                placeUnitAtGrid(r,c,createRandomEnemy(difficulty));
             }
         }
     }
@@ -682,7 +688,7 @@ static void saveUnit(QDataStream& out, Unit* unit) {
 void GameManager::saveGame(const QString& path) {
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly)) {
-        std::cout << "存档失败：无法打开文件" << std::endl;
+        std::cout << "fail" << std::endl;
         return;
     }
     QDataStream out(&file);
@@ -706,13 +712,11 @@ void GameManager::saveGame(const QString& path) {
             } else {
                 out << true;
                 out << unit->getName() << unit->getOwner() << unit->getLevel();
-                //装备：不能takeOff（会修改数据），用getTrait暂存装备名
                 //这里简单处理，写装备名或"None"
                 if (unit->isWearingEquipment()) {
                     //临时脱下记录名字再穿回去
-                    Equipment* eq = unit->takeOffEquipment(true);
+                    Equipment* eq = unit->getWearingEquipment();
                     QString eqName = eq->getName();
-                    unit->putOnEquipment(eq);
                     out << eqName;
                 } else {
                     out << QString("None");
@@ -732,9 +736,8 @@ void GameManager::saveGame(const QString& path) {
             out << true;
             out << unit->getName() << unit->getOwner() << unit->getLevel();
             if (unit->isWearingEquipment()) {
-                Equipment* eq = unit->takeOffEquipment(true);
+                Equipment* eq = unit->getWearingEquipment();
                 QString eqName = eq->getName();
-                unit->putOnEquipment(eq);
                 out << eqName;
             } else {
                 out << QString("None");
@@ -765,7 +768,7 @@ void GameManager::saveGame(const QString& path) {
     }
 
     file.close();
-    std::cout << "存档成功" << std::endl;
+    std::cout << "success" << std::endl;
 }
 
 void GameManager::loadGame(const QString& path) {

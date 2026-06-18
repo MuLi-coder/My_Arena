@@ -20,8 +20,6 @@ static int randomNum() {
     return random_num;
 }
 
-
-
 struct Action {
     std::string move;
     std::string attack;
@@ -105,6 +103,7 @@ public:
     void putOnEquipment(Equipment* equip);
     Equipment* takeOffEquipment(bool hasCell);
     bool isWearingEquipment();
+    Equipment* getWearingEquipment() const;
     //change Buff
     void changeHpBuff(int num);
     void changeAttBuff(int num);

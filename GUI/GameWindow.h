@@ -43,7 +43,7 @@ private slots:
     void updateBoardUI(); // 刷新场景显示
     void resolveMessageShow(ComResult result,int hp);
     void failToCombatMessage();
-
+    void traitActivateShow(bool w,bool m,bool a);
 public:
     explicit GameWindow(QWidget *parent = nullptr);
     PieceWidget* getPieceWidget(int r, int c);

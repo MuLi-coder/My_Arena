@@ -423,6 +423,10 @@ void GameManager::applyTraitBuffs() {
     int mageCount = 0;     // 法师：Mage + Warlock
     int assassinCount = 0; // 刺客：Assassin + Archer
 
+    bool warrior = false;
+    bool mage = false;
+    bool assassin = false;
+
     for (int r = 0; r < preBoard->getRow(); ++r) {
         for (int c = 0; c < preBoard->getCol(); ++c) {
             Unit* unit = preBoard->getUnitAt(r,c);
@@ -443,10 +447,12 @@ void GameManager::applyTraitBuffs() {
     //战士：2人触发，全体+15攻击
     int tHp=0, tAtt=0, tAttSpd=0, tAttArea=0, tMoveSpd=0, tMana=0;
     if (warriorCount >= 2) {
+        warrior = true;
         tAtt += 15;
     }
     //法师：2人触发，全体攻速CD-1
     if (mageCount >= 2) {
+        mage = true;
         tAttSpd += 1;
     }
 
@@ -463,6 +469,7 @@ void GameManager::applyTraitBuffs() {
     //机制类buff
     //刺客：2人触发，连击
     if (assassinCount >= 2) {
+        assassin = true;
         for (int r = 0; r < preBoard->getRow(); ++r) {
             for (int c = 0; c < preBoard->getCol(); ++c) {
                 Unit* unit = preBoard->getUnitAt(r,c);
@@ -475,6 +482,8 @@ void GameManager::applyTraitBuffs() {
             }
         }
     }
+
+    emit traitActivate(warrior,mage,assassin);
 }
 
 void GameManager::changeStateTo(GameState newGameState) {

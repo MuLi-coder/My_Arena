@@ -137,6 +137,7 @@ public:
     void shouldUpdate();
     void enterResolve(ComResult result,int hp);
     void failToCombat();
+    void traitActivate(bool w,bool m,bool a);
 };
 
 

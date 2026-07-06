@@ -16,6 +16,7 @@ GameWindow::GameWindow(QWidget *parent)
     connect(gameManager.get(),&GameManager::shouldUpdate,this,&GameWindow::updateBoardUI);
     connect(gameManager.get(),&GameManager::enterResolve,this,&GameWindow::resolveMessageShow);
     connect(gameManager.get(),&GameManager::failToCombat,this,&GameWindow::failToCombatMessage);
+    connect(gameManager.get(),&GameManager::traitActivate,this,&GameWindow::traitActivateShow);
     // 状态记录参数的初始化
     isDragging = false;
     isEquipping = false;
@@ -731,7 +732,19 @@ void GameWindow::failToCombatMessage() {
     QMessageBox::information(this,"操作失败","请先派出战斗英雄");
 }
 
+void GameWindow::traitActivateShow(bool w,bool m,bool a) {
+    QString wa = w?"True":"False";
+    QString ma = m?"True":"False";
+    QString as = a?"True":"False";
 
+    QMessageBox::information(this,"羁绊激活",
+        QString("------本次出战，激活羁绊：--------\n"
+                "战士羁绊： %1\n"
+                "法师羁绊： %2\n"
+                "刺客羁绊： %3\n")
+                .arg(wa).arg(ma).arg(as)
+        );
+}
 
 PieceWidget* GameWindow::getPieceWidget(const int r,const int c) {
     if (r>=0 && r<gameManager->getRow() && c>=0 && c< gameManager->getCol()) {

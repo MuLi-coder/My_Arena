@@ -93,13 +93,13 @@ void PieceWidget::setUnit(Unit* unit) {
     if (unit) {
         // 1. 加载并缩放人物图片
         QPixmap pixmap(unit->getImage());
-        QPixmap scaledPixmap = pixmap.scaled(CELL_SIZE, CELL_SIZE - 8, Qt::KeepAspectRatio, Qt::SmoothTransformation); // 高度减去血条的大概高度
+        QPixmap scaledPixmap = pixmap.scaled(CELL_SIZE, CELL_SIZE - 8, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         imageLabel->setPixmap(scaledPixmap);
 
         // 2. 根据当前血量更新血条
         int hpPercent = unit->getHp()*100/ unit->getMaxHp();
         hpLabel->setFixedSize((CELL_SIZE-8) * hpPercent/100, 6);
-        hpEmptyLabel->setFixedSize(CELL_SIZE-8-(CELL_SIZE-18) * hpPercent/100, 6);
+        hpEmptyLabel->setFixedSize(CELL_SIZE-8-(CELL_SIZE-8) * hpPercent/100, 6);
         if (currentUnit->getOwner()==0) {
             hpLabel->setStyleSheet("background-color: green; border-radius:3px; border: green");
         }else {

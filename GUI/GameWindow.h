@@ -30,6 +30,7 @@ class GameWindow : public QMainWindow {
     Unit* shopHero;
     Equipment* dragEquipment;
 
+
     // 页面，需要维护的数据
     std::vector<std::vector<PieceWidget*>> gridWidgets;
     std::vector<PieceWidget*> benchWidgets;
